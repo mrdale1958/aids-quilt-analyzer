@@ -1,0 +1,38 @@
+-- AIDS Quilt Database Schema
+CREATE TABLE IF NOT EXISTS blocks (
+    blockID INTEGER PRIMARY KEY,
+    needsRecrop INTEGER DEFAULT 0,
+    completed INTEGER DEFAULT 0,
+    started INTEGER DEFAULT 0,
+    not8Panel INTEGER DEFAULT 0,
+    orientation_data TEXT,
+    ip_address TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS panels (
+    panelID INTEGER PRIMARY KEY,
+    blockID INTEGER,
+    panel_number INTEGER,
+    x_coord INTEGER,
+    y_coord INTEGER,
+    width INTEGER,
+    height INTEGER,
+    FOREIGN KEY (blockID) REFERENCES blocks(blockID)
+);
+
+CREATE TABLE IF NOT EXISTS session_stats (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ip_address TEXT,
+    blocks_analyzed INTEGER DEFAULT 0,
+    session_start DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert sample blocks for testing
+INSERT OR IGNORE INTO blocks (blockID, needsRecrop, completed) VALUES 
+(1, 0, 0),
+(2, 1, 0),
+(3, 0, 1),
+(4, 0, 0),
+(5, 1, 0);
