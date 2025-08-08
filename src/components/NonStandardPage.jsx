@@ -47,13 +47,16 @@ const NonStandardPage = ({ onBack }) => {
         try {
             console.log('📊 NonStandardPage: Loading confirmed blocks...');
             const response = await fetch('/api/blocks/nonstandard');
+            console.log('📊 NonStandardPage confirmed response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 NonStandardPage confirmed blocks:', data);
+                console.log('📊 NonStandardPage confirmed raw data:', data);
                 console.log('📊 NonStandardPage confirmed count:', Array.isArray(data) ? data.length : 0);
                 setConfirmedBlocks(Array.isArray(data) ? data : []);
             } else {
-                console.error('Failed to fetch confirmed non-standard blocks');
+                const errorText = await response.text();
+                console.error('Failed to fetch confirmed non-standard blocks:', response.status, errorText);
                 setConfirmedBlocks([]);
             }
         } catch (error) {
@@ -66,13 +69,16 @@ const NonStandardPage = ({ onBack }) => {
         try {
             console.log('📊 NonStandardPage: Loading pending blocks...');
             const response = await fetch('/api/blocks/nonstandard/pending');
+            console.log('📊 NonStandardPage pending response status:', response.status);
+            
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 NonStandardPage pending blocks:', data);
+                console.log('📊 NonStandardPage pending raw data:', data);
                 console.log('📊 NonStandardPage pending count:', Array.isArray(data) ? data.length : 0);
                 setPendingBlocks(Array.isArray(data) ? data : []);
             } else {
-                console.error('Failed to fetch pending non-standard blocks');
+                const errorText = await response.text();
+                console.error('Failed to fetch pending non-standard blocks:', response.status, errorText);
                 setPendingBlocks([]);
             }
         } catch (error) {

@@ -55,12 +55,17 @@ app.use((req, res, next) => {
 });
 
 // Mount routes
-console.log('🚀 Mounting routes...');
+try {
+  console.log('🚀 Mounting routes...');
 const blockRoutes = createBlockRoutes(db, consensusService);
 console.log('🔧 Block routes created:', !!blockRoutes);
 app.use('/api/blocks', blockRoutes);
 console.log('✅ Blocks routes mounted at /api/blocks');
+} catch (error) {
+    console.error('❌ Error with blocks:', error);
+        process.exit(1);
 
+}
 app.use('/api/stats', createStatsRoutes(db));
 console.log('✅ Stats routes mounted at /api/stats');
 
@@ -184,4 +189,18 @@ process.on('SIGINT', () => {
         }
         process.exit(0);
     });
+});
+
+// Add this route to your server:
+app.post('/api/recrop/access', (req, res) => {
+    const { password } = req.body;
+    
+    // Set your desired password here
+    const RECROP_PASSWORD = 'admin123'; // Change this to your preferred password
+    
+    if (password === RECROP_PASSWORD) {
+        res.json({ success: true });
+    } else {
+        res.status(401).json({ error: 'Invalid password' });
+    }
 });

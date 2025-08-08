@@ -3,19 +3,18 @@ import StatsPanel from './StatsPanel';
 import styles from './Dashboard.module.css';
 
 const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDashboardUpdate }) => {
-    console.log('📊 Dashboard component rendering...');
-    console.log('🎨 Styles object:', styles);
+    console.log('🔧 Dashboard component mounting...');
     
     const [stats, setStats] = useState({});
     const [votingStats, setVotingStats] = useState({});
     const [nonStandardStats, setNonStandardStats] = useState({ confirmed: 0, pending: 0 });
     const [recropStats, setRecropStats] = useState({ needsRecrop: 0 });
     const [nextBlock, setNextBlock] = useState(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     
     // Add debug logging for state changes
-    console.log('🔍 Current loading state:', isLoading);
+    console.log('🔍 Current loading state:', loading);
     console.log('🔍 Current error state:', error);
     console.log('🔍 Current nextBlock:', nextBlock?.blockID || 'none');
 
@@ -23,42 +22,42 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
     useEffect(() => {
         console.log('📊 Dashboard useEffect starting...');
         
-        // Add a timeout to prevent infinite loading
-        const loadingTimeout = setTimeout(() => {
-            console.log('⏰ Loading timeout - forcing show');
-            setIsLoading(false);
-        }, 5000); // 5 second timeout
-        
-        const loadAllData = async () => {
+        const loadData = async () => {
             try {
-                setIsLoading(true);
-                setError(null);
-                console.log('🔄 Starting data load sequence...');
+                console.log('📊 Starting to load dashboard data...');
+                setLoading(true);
                 
-                // Load all data in parallel
-                await Promise.all([
-                    fetchNextBlock(),
-                    fetchStats(),
-                    fetchVotingStats(),
-                    fetchNonStandardStats(),
-                    fetchRecropStats()
-                ]);
+                console.log('📊 Loading stats...');
+                await fetchStats();
+                console.log('✅ Stats loaded');
                 
-                console.log('🎉 All data loaded successfully');
-                clearTimeout(loadingTimeout); // Clear timeout on success
+                console.log('📊 Loading voting stats...');
+                await fetchVotingStats();
+                console.log('✅ Voting stats loaded');
+                
+                console.log('📊 Loading next block...');
+                await fetchNextBlock();
+                console.log('✅ Next block loaded');
+                
+                console.log('📊 Loading non-standard stats...');
+                await fetchNonStandardStats();
+                console.log('✅ Non-standard stats loaded');
+                
+                console.log('📊 Loading recrop stats...');
+                await fetchRecropStats();
+                console.log('✅ Recrop stats loaded');
+                
+                setLoading(false);
+                console.log('✅ All dashboard data loaded successfully');
+                
             } catch (error) {
                 console.error('❌ Error loading dashboard data:', error);
-                setError('Failed to load dashboard data. Please try again.');
-                clearTimeout(loadingTimeout); // Clear timeout on error
-            } finally {
-                setIsLoading(false);
+                setError(error.message);
+                setLoading(false);
             }
         };
         
-        loadAllData();
-        
-        // Cleanup timeout on unmount
-        return () => clearTimeout(loadingTimeout);
+        loadData();
     }, []);
 
     const fetchNextBlock = async () => {
@@ -115,6 +114,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                 setVotingStats({
                     totalVotes: 0,
                     blocksWithOneVote: 0,
+                    blocksWithTwoVotes: 0,
                     consensusReached: 0,
                     totalUniqueBlocks: 0
                 });
@@ -124,6 +124,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
             setVotingStats({
                 totalVotes: 0,
                 blocksWithOneVote: 0,
+                blocksWithTwoVotes: 0,
                 consensusReached: 0,
                 totalUniqueBlocks: 0
             });
@@ -133,27 +134,17 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
     const fetchNonStandardStats = async () => {
         try {
             console.log('🔄 Fetching non-standard stats...');
-            const [confirmedRes, pendingRes] = await Promise.all([
-                fetch('/api/blocks/nonstandard'),
-                fetch('/api/blocks/nonstandard/pending')
-            ]);
-
-            if (confirmedRes.ok && pendingRes.ok) {
-                const confirmedData = await confirmedRes.json();
-                const pendingData = await pendingRes.json();
-                
-                console.log('📊 Non-standard stats - confirmed:', confirmedData.length, 'pending:', pendingData.length);
-                
+            const response = await fetch('/api/stats/nonstandard');
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Non-standard stats:', data);
                 setNonStandardStats({
-                    confirmed: Array.isArray(confirmedData) ? confirmedData.length : 0,
-                    pending: Array.isArray(pendingData) ? pendingData.length : 0
+                    confirmed: data.confirmed || 0,
+                    pending: data.pending || 0
                 });
-            } else {
-                console.error('❌ Failed to fetch non-standard stats');
-                setNonStandardStats({ confirmed: 0, pending: 0 });
             }
         } catch (error) {
-            console.error('❌ Error fetching non-standard stats:', error);
+            console.error('❌ Failed to fetch non-standard stats:', error);
             setNonStandardStats({ confirmed: 0, pending: 0 });
         }
     };
@@ -161,20 +152,18 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
     const fetchRecropStats = async () => {
         try {
             console.log('🔄 Fetching recrop stats...');
-            const response = await fetch('/api/blocks/recrop');
+            const response = await fetch('/api/stats/recrop');
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 Recrop stats:', data.length, 'blocks');
+                console.log('📊 Recrop stats:', data);
                 setRecropStats({
-                    needsRecrop: Array.isArray(data) ? data.length : 0
+                    needsRecrop: data.needsRecrop || 0,
+                    completed: data.completed || 0
                 });
-            } else {
-                console.error('❌ Failed to fetch recrop stats:', response.status);
-                setRecropStats({ needsRecrop: 0 });
             }
         } catch (error) {
-            console.error('❌ Error fetching recrop stats:', error);
-            setRecropStats({ needsRecrop: 0 });
+            console.error('❌ Failed to fetch recrop stats:', error);
+            setRecropStats({ needsRecrop: 0, completed: 0 });
         }
     };
 
@@ -190,7 +179,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
 
     const handleRefresh = async () => {
         console.log('🔄 Manual refresh triggered');
-        setIsLoading(true);
+        setLoading(true);
         setError(null);
         
         try {
@@ -205,12 +194,12 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
             console.error('❌ Error during refresh:', error);
             setError('Failed to refresh dashboard data');
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
     // Update the loading check with more detailed logging
-    if (isLoading) {
+    if (loading) {
         console.log('🔄 Showing loading state...');
         return (
             <div className={styles.dashboard}>
@@ -218,7 +207,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                     <h2>Loading Dashboard...</h2>
                     <div style={{marginTop: '10px', fontSize: '24px'}}>🔄</div>
                     <div style={{marginTop: '10px', fontSize: '12px', color: '#666'}}>
-                        Debug: isLoading = {isLoading.toString()}
+                        Debug: isLoading = {loading.toString()}
                     </div>
                 </div>
             </div>
@@ -265,10 +254,9 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
 
             <div className={styles.actionSection}>
                 <div className={styles.nextBlockCard}>
-                    <h3>Next Block to Analyze</h3>
+                    <h3>Next Block to Analyze: {nextBlock.blockID}</h3>
                     {nextBlock ? (
                         <div>
-                            <p>Next block: <strong>Block #{nextBlock.blockID}</strong></p>
                             <div className={styles.blockVotingStatus}>
                                 <p>Current votes: <strong>{nextBlock.vote_count || 0}</strong></p>
                                 <p className={styles.votesNeeded}>
@@ -281,9 +269,9 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                                 className={`btn-primary ${styles.analyzeBtn}`}
                                 onClick={handleStartAnalyzing}
                             >
-                                {(!nextBlock.vote_count || nextBlock.vote_count === 0) ? 'Start First Analysis' : 
-                                 nextBlock.vote_count === 1 ? 'Provide Second Analysis' :
-                                 'Provide Additional Analysis'}
+                                {(!nextBlock.vote_count || nextBlock.vote_count === 0) ? 'Start First Analysis of Block #' + nextBlock.blockID : 
+                                 nextBlock.vote_count === 1 ? 'Provide Second Analysis of Block # ' + nextBlock.blockID :
+                                 'Provide Additional Analysis of Block # ' + nextBlock.blockID}
                             </button>
                         </div>
                     ) : (
@@ -293,7 +281,6 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                         </div>
                     )}
                 </div>
-
                 <div className={styles.instructionsCard}>
                     <div className={styles.votingProgress}>
                         <h3>Current Progress</h3>
@@ -332,23 +319,8 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                 </div>
             </div>
 
-            <div className={styles.statCard}>
-                <h3>Non-Standard Blocks</h3>
-                <div className={styles.statNumber}>
-                    {(nonStandardStats.confirmed || 0) + (nonStandardStats.pending || 0)}
-                </div>
-                <div className={styles.statDetails}>
-                    <div>Confirmed: {nonStandardStats.confirmed || 0}</div>
-                    <div>Pending: {nonStandardStats.pending || 0}</div>
-                </div>
-                <button 
-                    className={`btn-secondary ${styles.viewAllBtn}`}
-                    onClick={onViewNonStandard}
-                >
-                    View All
-                </button>
-            </div>
-
+            
+            
             <StatsPanel 
                 stats={stats}
                 votingStats={votingStats}

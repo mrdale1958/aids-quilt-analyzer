@@ -4,176 +4,195 @@ const RecropListPage = ({ onBack }) => {
     const [blocks, setBlocks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [verifying, setVerifying] = useState(new Set()); // Track which blocks are being verified
 
     useEffect(() => {
-        loadBlocks();
+        loadRecropBlocks();
     }, []);
 
-    const loadBlocks = async () => {
-        setLoading(true);
-        setError(null);
-        
+    const loadRecropBlocks = async () => {
         try {
-            console.log('Fetching recrop blocks...');
+            setLoading(true);
+            console.log('🔄 Loading blocks that need recrop...');
+            
             const response = await fetch('/api/blocks/recrop');
-            
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Recrop blocks data:', data);
+                setBlocks(Array.isArray(data) ? data : []);
+            } else {
+                console.error('Failed to fetch recrop blocks:', response.status);
+                setError('Failed to load blocks needing recrop');
             }
-            
-            const data = await response.json();
-            console.log('Recrop blocks data:', data);
-            setBlocks(data);
         } catch (error) {
             console.error('Error loading recrop blocks:', error);
-            setError('Failed to load blocks needing re-crop');
+            setError('Error loading recrop blocks');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleVerifyBlock = async (block, shouldNeedRecrop) => {
-        const blockId = block.blockID;
-        console.log('🔍 Verifying block:', blockId, 'shouldNeedRecrop:', shouldNeedRecrop);
-        
-        setVerifying(prev => new Set(prev).add(blockId));
-        
+    const handleVerifyRecrop = async (blockId, needsRecrop) => {
         try {
+            console.log(`🔧 ${needsRecrop ? 'Confirming' : 'Rejecting'} recrop for block:`, blockId);
+            
+            const requestBody = {
+                needsRecrop: needsRecrop ? 1 : 0,
+                verifiedBy: 'User', // You can get actual user info if available
+                timestamp: new Date().toISOString()
+            };
+            
+            console.log('📤 Request body:', requestBody);
+            console.log('📤 Request URL:', `/api/blocks/${blockId}/recrop`);
+            
             const response = await fetch(`/api/blocks/${blockId}/recrop`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    needsRecrop: shouldNeedRecrop ? 1 : 0,
-                    verifiedBy: 'manual_verification',
-                    timestamp: new Date().toISOString()
-                })
+                body: JSON.stringify(requestBody)
             });
-
+            
+            console.log('📥 Response status:', response.status);
+            console.log('📥 Response ok:', response.ok);
+            
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Block verification updated:', result);
+                console.log('✅ Recrop verification successful:', result);
                 
                 // Show success message
-                alert(shouldNeedRecrop ? 
-                    `Block ${blockId} confirmed as needing re-cropping` :
-                    `Block ${blockId} marked as properly cropped`
-                );
+                alert(`Block ${blockId} ${needsRecrop ? 'confirmed for recrop' : 'marked as good'}`);
                 
-                // Reload the blocks list
-                loadBlocks();
+                // Reload the list to reflect changes
+                await loadRecropBlocks();
             } else {
-                throw new Error(`Failed to update block: ${response.status}`);
+                const errorText = await response.text();
+                console.error('❌ Failed to verify recrop:', response.status, errorText);
+                alert(`Failed to update recrop status: ${response.status} - ${errorText}`);
             }
         } catch (error) {
-            console.error('❌ Error verifying block:', error);
-            alert('Error updating block verification. Please try again.');
-        } finally {
-            setVerifying(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(blockId);
-                return newSet;
-            });
+            console.error('❌ Error verifying recrop:', error);
+            alert('Error updating recrop status. Please try again.');
         }
     };
 
     if (loading) {
         return (
-            <div className="recroplist-loading">
-                <h2>Loading blocks needing re-crop...</h2>
-                <div className="spinner"></div>
+            <div style={{ padding: '20px' }}>
+                <h1>Blocks Needing Recrop</h1>
+                <button onClick={onBack} style={{ marginBottom: '20px' }}>
+                    ← Back to Dashboard
+                </button>
+                <div>Loading blocks that need recrop...</div>
             </div>
         );
     }
 
     if (error) {
         return (
-            <div className="recroplist-error">
-                <h2>Error Loading Re-crop Queue</h2>
-                <p>{error}</p>
-                <button onClick={onBack} className="btn-primary">
-                    Back to Dashboard
+            <div style={{ padding: '20px' }}>
+                <h1>Blocks Needing Recrop</h1>
+                <button onClick={onBack} style={{ marginBottom: '20px' }}>
+                    ← Back to Dashboard
                 </button>
-                <button onClick={loadBlocks} className="btn-secondary">
-                    Try Again
-                </button>
+                <div style={{ color: 'red' }}>Error: {error}</div>
             </div>
         );
     }
 
     return (
-        <div className="recrop-list-page">
-            <div className="page-header">
-                <button onClick={onBack} className="btn-back">
-                    ← Back to Dashboard
-                </button>
-                <h1>Re-crop Queue</h1>
-                <p className="page-description">
-                    Blocks that have been flagged as needing re-cropping
-                </p>
-            </div>
-
-            <div className="blocks-grid">
-                {blocks.map(block => (
-                    <div key={block.blockID} className="block-card">
-                        <div className="block-header">
-                            <h3>Block #{block.blockID}</h3>
-                            <div className="block-actions">
-                                <button 
-                                    className="btn-verify-correct"
-                                    onClick={() => handleVerifyBlock(block, false)}
-                                    disabled={verifying.has(block.blockID)}
-                                    title="Mark as properly cropped (remove from queue)"
-                                >
-                                    {verifying.has(block.blockID) ? '⏳' : '✅'} Properly Cropped
-                                </button>
-                                <button 
-                                    className="btn-verify-confirm"
-                                    onClick={() => handleVerifyBlock(block, true)}
-                                    disabled={verifying.has(block.blockID)}
-                                    title="Confirm it needs re-cropping"
-                                >
-                                    {verifying.has(block.blockID) ? '⏳' : '🔧'} Needs Re-crop
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div className="block-image">
-                            <img 
-                                src={`/api/image/${block.blockID}`}
-                                alt={`Block ${block.blockID}`}
-                                onError={(e) => {
-                                    e.target.src = '/images/placeholder.png';
-                                }}
-                            />
-                        </div>
-                        
-                        <div className="block-info">
-                            <div className="info-row">
-                                <span className="label">Status:</span>
-                                <span className="value recrop-flag">Needs Re-cropping</span>
-                            </div>
-                            <div className="info-row">
-                                <span className="label">Votes:</span>
-                                <span className="value">{block.vote_count || 0}</span>
-                            </div>
-                            {block.updated_at && (
-                                <div className="info-row">
-                                    <span className="label">Updated:</span>
-                                    <span className="value">{new Date(block.updated_at).toLocaleDateString()}</span>
+        <div style={{ padding: '20px' }}>
+            <h1>Blocks Needing Recrop</h1>
+            <button onClick={onBack} style={{ marginBottom: '20px' }}>
+                ← Back to Dashboard
+            </button>
+            
+            {blocks.length === 0 ? (
+                <p>No blocks currently need recropping.</p>
+            ) : (
+                <div>
+                    <p>Found {blocks.length} blocks that need recropping:</p>
+                    
+                    <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+                        gap: '20px',
+                        marginTop: '20px'
+                    }}>
+                        {blocks.map(block => (
+                            <div key={block.blockID} style={{
+                                border: '1px solid #ddd',
+                                borderRadius: '8px',
+                                padding: '15px',
+                                backgroundColor: '#f9f9f9'
+                            }}>
+                                <h3>Block #{block.blockID}</h3>
+                                
+                                {/* Block Image */}
+                                <div style={{ marginBottom: '15px' }}>
+                                    <img 
+                                        src={`/api/image/${block.blockID}`}
+                                        alt={`Block ${block.blockID}`}
+                                        style={{
+                                            width: '100%',
+                                            maxWidth: '200px',
+                                            height: 'auto',
+                                            border: '1px solid #ccc',
+                                            borderRadius: '4px'
+                                        }}
+                                        onError={(e) => {
+                                            e.target.style.display = 'none';
+                                            e.target.nextSibling.style.display = 'block';
+                                        }}
+                                    />
+                                    <div style={{ display: 'none', color: '#666', fontStyle: 'italic' }}>
+                                        Image not available
+                                    </div>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                ))}
-            </div>
 
-            {blocks.length === 0 && !loading && (
-                <div className="empty-state">
-                    <h2>No blocks need re-cropping</h2>
-                    <p>All blocks have been properly cropped!</p>
+                                {/* Block Info */}
+                                <div style={{ marginBottom: '15px', fontSize: '14px' }}>
+                                    {block.updated_at && (
+                                        <div>Updated: {new Date(block.updated_at).toLocaleDateString()}</div>
+                                    )}
+                                    {block.verified_by && (
+                                        <div>Flagged by: {block.verified_by}</div>
+                                    )}
+                                </div>
+
+                                {/* Verification Buttons */}
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <button
+                                        onClick={() => handleVerifyRecrop(block.blockID, true)}
+                                        style={{
+                                            flex: 1,
+                                            padding: '8px 12px',
+                                            backgroundColor: '#dc3545',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        ✓ Confirm Needs Recrop
+                                    </button>
+                                    <button
+                                        onClick={() => handleVerifyRecrop(block.blockID, false)}
+                                        style={{
+                                            flex: 1,
+                                            padding: '8px 12px',
+                                            backgroundColor: '#28a745',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                        }}
+                                    >
+                                        ✗ Looks Good
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

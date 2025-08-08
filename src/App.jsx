@@ -63,15 +63,23 @@ function App() {
     };
 
     const renderCurrentPage = () => {
-        console.log('🎨 Rendering page:', currentPage);
+        console.log('🎯 App renderCurrentPage called with currentPage:', currentPage);
+        console.log('🎯 Type of currentPage:', typeof currentPage);
+        console.log('🎯 currentPage === "dashboard":', currentPage === 'dashboard');
         
         switch (currentPage) {
+            case 'dashboard':
+                console.log('🎯 Rendering Dashboard component...');
+                return (
+                    <Dashboard 
+                        onAnalyzeBlock={handleAnalyzeBlock}
+                        onViewNonStandard={() => setCurrentPage('nonstandard')}
+                        onViewRecropQueue={() => setCurrentPage('recroplist')}
+                        onDashboardUpdate={handleDashboardUpdate}
+                    />
+                );
             case 'analyzer':
-                if (!selectedBlock) {
-                    console.log('❌ No block selected, returning to dashboard');
-                    setCurrentPage('dashboard');
-                    return null;
-                }
+                console.log('🎯 Rendering Analyzer component...');
                 return (
                     <QuiltAnalyzer 
                         blockId={selectedBlock.blockID} 
@@ -79,8 +87,22 @@ function App() {
                         onBack={() => setCurrentPage('dashboard')} 
                     />
                 );
-            
+            case 'nonstandard':
+                console.log('🎯 Rendering NonStandardPage component...');
+                return (
+                    <NonStandardPage 
+                        onBack={() => setCurrentPage('dashboard')}
+                    />
+                );
+            case 'recroplist':
+                console.log('🎯 Rendering RecropListPage component...');
+                return (
+                    <RecropListPage 
+                        onBack={() => setCurrentPage('dashboard')}
+                    />
+                );
             case 'recrop':
+                console.log('🎯 Rendering RecropPage component...');
                 if (recropAccess) {
                     return (
                         <RecropPage 
@@ -91,40 +113,39 @@ function App() {
                     setCurrentPage('dashboard');
                     return null;
                 }
-            
-            case 'nonstandard':
-                return (
-                    <NonStandardPage 
-                        onBack={() => setCurrentPage('dashboard')}
-                    />
-                );
-            
-            case 'recroplist':
-                return (
-                    <RecropListPage 
-                        onBack={() => setCurrentPage('dashboard')}
-                    />
-                );
-            
-            case 'dashboard':
             default:
-                return (
-                    <Dashboard 
-                        onAnalyzeBlock={handleAnalyzeBlock}
-                        onViewNonStandard={() => setCurrentPage('nonstandard')}
-                        onViewRecropQueue={handleRecropAccess}
-                        onDashboardUpdate={handleDashboardUpdate}
-                    />
-                );
+                console.log('🎯 Default case - currentPage was:', currentPage);
+                console.log('🎯 Setting currentPage to dashboard...');
+                setCurrentPage('dashboard');
+                return null;
         }
     };
 
     const pageContent = renderCurrentPage();
     console.log('🎨 Page content:', pageContent); // Debug log
 
+    // Also add debugging to the main App component render:
+    console.log('🔧 App component rendering...');
+    //console.log('🔍 Current state - currentPage:', currentPage, 'loading:', loading);
+
     return (
         <div className="App">
-            {/* Add navigation header */}
+            {/* Add this debug info temporarily */}
+            <div style={{
+                position: 'fixed', 
+                top: 0, 
+                right: 0, 
+                background: 'red', 
+                color: 'white', 
+                padding: '10px',
+                zIndex: 9999,
+                fontSize: '12px'
+            }}>
+                Debug: currentPage = "{currentPage}"<br/>
+                Loading = 
+            </div>
+            
+            {/* Your existing header */}
             <header className="app-header">
                 <div className="app-header-content">
                     <h1 className="app-title">AIDS Quilt Digital Archive</h1>
@@ -155,19 +176,13 @@ function App() {
                         </button>
                         <button 
                             className={`nav-btn ${currentPage === 'recroplist' ? 'active' : ''}`}
-                            onClick={handleRecropAccess}
+                            onClick={() => setCurrentPage('recroplist')} // Direct navigation, no password
                         >
                             Blocks Needing Recrop
                         </button>
                         <button 
                             className={`nav-btn ${currentPage === 'recrop' ? 'active' : ''}`}
-                            onClick={() => {
-                                if (recropAccess) {
-                                    setCurrentPage('recrop');
-                                } else {
-                                    handleRecropAccess();
-                                }
-                            }}
+                            onClick={handleRecropAccess} // Password required for actual tool
                         >
                             Block Recrop Tool
                         </button>

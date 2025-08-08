@@ -25,7 +25,7 @@ const RecropPage = ({ onBack }) => {
         setPreviewMode(false);
         
         try {
-            const response = await fetch('/api/block/recrop/next');
+            const response = await fetch('/api/blocks/recrop/next');
             if (response.ok) {
                 const blockData = await response.json();
                 if (blockData) {
@@ -270,6 +270,38 @@ const RecropPage = ({ onBack }) => {
         }
     };
 
+    const completeRecrop = async () => {
+        if (!currentBlock) return;
+        
+        try {
+            console.log('✅ Marking recrop as complete for block:', currentBlock.blockID);
+            
+            const response = await fetch(`/api/blocks/${currentBlock.blockID}/recrop/complete`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    verifiedBy: 'Recrop Tool User',
+                    timestamp: new Date().toISOString()
+                })
+            });
+            
+            if (response.ok) {
+                console.log('✅ Recrop marked as complete');
+                alert(`Block ${currentBlock.blockID} recrop completed!`);
+                // Load the next block needing recrop
+                await loadNextRecropBlock();
+            } else {
+                console.error('❌ Failed to complete recrop:', response.status);
+                alert('Failed to mark recrop as complete. Please try again.');
+            }
+        } catch (error) {
+            console.error('❌ Error completing recrop:', error);
+            alert('Error completing recrop. Please try again.');
+        }
+    };
+
     const resetCrop = () => {
         setPreviewMode(false);
         if (currentBlock) {
@@ -389,6 +421,22 @@ const RecropPage = ({ onBack }) => {
                     </div>
                 </div>
             </div>
+
+            <button 
+                onClick={completeRecrop}
+                style={{
+                    padding: '12px 24px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    marginTop: '20px'
+                }}
+            >
+                ✅ Mark Recrop as Complete
+            </button>
         </div>
     );
 };

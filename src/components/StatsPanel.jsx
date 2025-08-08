@@ -9,6 +9,13 @@ const StatsPanel = ({
     onViewNonStandard, 
     onViewRecropQueue 
 }) => {
+    // Add debug logging
+    console.log('📊 StatsPanel received data:');
+    console.log('  - stats:', stats);
+    console.log('  - votingStats:', votingStats);
+    console.log('  - nonStandardStats:', nonStandardStats);
+    console.log('  - recropStats:', recropStats);
+
     return (
         <div className={styles.statsPanel}>
             <h3>Analysis Progress</h3>
@@ -38,70 +45,83 @@ const StatsPanel = ({
 
                 {/* Block Types Card */}
                 <div className={styles.statCard}>
-                    <h4>Block Types</h4>
+                    <h3>Block Types</h3>
                     <div className={styles.statRow}>
-                        <span className={styles.statLabel}>Standard 8-Panel:</span>
-                        <span className={styles.statValue}>{votingStats.standardBlocks || 6066}</span>
-                    </div>
-                    <div className={styles.statRow}>
-                        <span className={styles.statLabel}>Standard Completed:</span>
-                        <span className={styles.statValue}>{votingStats.standardCompleted || 0}</span>
-                    </div>
-                    <div className={`${styles.statRow} ${styles.highlight}`}>
-                        <span className={styles.statLabel}>Non-Standard Confirmed:</span>
-                        <span className={styles.statValue}>{nonStandardStats.totalNonStandard || 0}</span>
+                        <div className={styles.statLabel}>Standard 8-Panel</div>
+                        <div className={styles.statNumber}>{stats.standard8Panel || 0}</div>
                     </div>
                     <div className={styles.statRow}>
-                        <span className={styles.statLabel}>Non-Standard Pending:</span>
-                        <span className={styles.statValue}>{votingStats.pendingNonStandard || 0}</span>
+                            <div className={styles.statLabel}>Standard Completed</div>
+                            <div className={styles.statNumber}>{stats.standardCompleted || 0}</div>
                     </div>
                     <div className={styles.statRow}>
-                        <span className={styles.statLabel}>Non-Standard Completed:</span>
-                        <span className={styles.statValue}>{votingStats.nonStandardCompleted || 0}</span>
+                        <div className={styles.statLabel}>Non-Standard Confirmed</div>
+                        <div className={styles.statNumber}>{stats.nonStandardConfirmed || 0}</div>
                     </div>
-                    {(nonStandardStats.totalNonStandard || 0) > 0 && (
-                        <button 
-                            className={styles.btnLink}
-                            onClick={onViewNonStandard}
-                        >
-                            View Non-Standard Blocks →
-                        </button>
-                    )}
-                </div>
+                    <div className={styles.statRow}>
+                            <div className={styles.statLabel}>Non-Standard Pending</div>
+                            <div className={styles.statNumber}>{stats.nonStandardPending || 0}</div>
+                    </div>
+                    <div className={styles.statRow}>
+                             <div className={styles.statLabel}>Non-Standard Completed</div>
+                           <div className={styles.statNumber}>{stats.nonStandardCompleted || 0}</div>
+                    </div>
+                    </div>
 
-                {/* Re-crop Card */}
+                {/* Re-crop Card - FIXED */}
                 <div className={styles.statCard}>
                     <h4>Re-crop Status</h4>
                     <div className={styles.statRow}>
                         <span className={styles.statLabel}>Blocks Needing Re-crop:</span>
-                        <span className={styles.statValue}>{recropStats.totalNeedingRecrop || 0}</span>
+                        <span className={styles.statValue}>{recropStats.needsRecrop || 0}</span>
                     </div>
                     <div className={styles.statRow}>
                         <span className={styles.statLabel}>Blocks Re-cropped:</span>
-                        <span className={styles.statValue}>{recropStats.totalRecropped || 0}</span>
+                        <span className={styles.statValue}>{recropStats.completed || 0}</span>
                     </div>
                     <div className={styles.progressIndicator}>
                         <div className={styles.progressBar}>
                             <div 
                                 className={styles.progressFill}
                                 style={{
-                                    width: `${recropStats.totalNeedingRecrop > 0 ? 
-                                        (recropStats.totalRecropped / recropStats.totalNeedingRecrop) * 100 : 0}%`
+                                    width: `${(recropStats.needsRecrop || 0) > 0 ? 
+                                        ((recropStats.completed || 0) / (recropStats.needsRecrop || 1)) * 100 : 0}%`
                                 }}
                             />
                         </div>
                         <span className={styles.progressText}>
-                            {recropStats.totalNeedingRecrop > 0 ? 
-                                `${Math.round((recropStats.totalRecropped / recropStats.totalNeedingRecrop) * 100)}%` : 
+                            {(recropStats.needsRecrop || 0) > 0 ? 
+                                `${Math.round(((recropStats.completed || 0) / (recropStats.needsRecrop || 1)) * 100)}%` : 
                                 '0%'} complete
                         </span>
                     </div>
-                    {(recropStats.totalNeedingRecrop || 0) > 0 && (
+                    {(recropStats.needsRecrop || 0) > 0 && (
                         <button 
                             className={styles.btnLink}
                             onClick={onViewRecropQueue}
                         >
                             View Re-crop Queue →
+                        </button>
+                    )}
+                </div>
+                {/* Non-standard Card - FIXED */}
+                <div className={styles.statCard}>
+                    <h4>Non-standard Status</h4>
+                    <div className={styles.statRow}>
+                        <span className={styles.statLabel}>Non-8 panel blocks noted:</span>
+                        <span className={styles.statValue}>{nonStandardStats.pending || 0}</span>
+                    </div>
+                    <div className={styles.statRow}>
+                        <span className={styles.statLabel}>Non-Standard Completed:</span>
+                        <span className={styles.statValue}>{nonStandardStats.confirmed || 0}</span>
+                    </div>
+                    
+                    {(nonStandardStats.pending || 0) > 0 && (
+                        <button 
+                            className={styles.btnLink}
+                            onClick={onViewNonStandard}
+                        >
+                            View Non-Standard Queue →
                         </button>
                     )}
                 </div>
