@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Dashboard from './components/Dashboard';
 import QuiltAnalyzer from './components/QuiltAnalyzer';
 import RecropPage from './components/RecropPage';
@@ -20,13 +20,54 @@ function App() {
         console.log('🔍 Selected block:', selectedBlock);
     }, [currentPage, selectedBlock]);
 
+    // Handle URL parameters for direct block access
+    useEffect(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const blockParam = urlParams.get('block');
+        
+        if (blockParam && !selectedBlock) {
+            const blockId = parseInt(blockParam);
+            if (!isNaN(blockId) && blockId > 0) {
+                // Load the specific block
+                loadSpecificBlock(blockId);
+            }
+        }
+    }, [selectedBlock]);
+
+    const loadSpecificBlock = async (blockId) => {
+        try {
+            const response = await fetch(`/api/blocks/${blockId}`);
+            if (response.ok) {
+                const blockData = await response.json();
+                console.log('🎯 Loading block from URL:', blockData);
+                setSelectedBlock(blockData);
+                setCurrentPage('analyzer');
+                // Update URL without the parameter to clean it up
+                window.history.replaceState({}, '', window.location.pathname);
+            } else if (response.status === 404) {
+                alert(`Block #${blockId} not found in the database`);
+            } else {
+                console.error('Error loading block from URL');
+            }
+        } catch (error) {
+            console.error('Error loading specific block from URL:', error);
+        }
+    };
+
     const handleAnalyzeBlock = (blockData) => {
         console.log('🎯 Analyzing block:', blockData);
         setSelectedBlock(blockData);
         setCurrentPage('analyzer');
     };
 
-    const handleRecropAccess = () => {
+
+    // Handler for recrop list (public)
+    const handleRecropList = () => {
+        setCurrentPage('recroplist');
+    };
+
+    // Handler for recrop tool (password protected)
+    const handleRecropToolAccess = () => {
         setShowRecropModal(true);
     };
 
@@ -62,6 +103,11 @@ function App() {
         setNextBlock(dashboardData.nextBlock);
     };
 
+    // Memoize the onBack callback to prevent unnecessary re-renders
+    const handleBackToDashboard = useCallback(() => {
+        setCurrentPage('dashboard');
+    }, []);
+
     const renderCurrentPage = () => {
         console.log('🎨 Rendering page:', currentPage);
         
@@ -81,10 +127,11 @@ function App() {
                 );
             
             case 'recrop':
+                // Only accessible via password, keep as is
                 if (recropAccess) {
                     return (
                         <RecropPage 
-                            onBack={() => setCurrentPage('dashboard')} 
+                            onBack={handleBackToDashboard} 
                         />
                     );
                 } else {
@@ -112,7 +159,8 @@ function App() {
                     <Dashboard 
                         onAnalyzeBlock={handleAnalyzeBlock}
                         onViewNot8Panel={() => setCurrentPage('not8panel')}
-                        onViewRecropQueue={handleRecropAccess}
+                        onViewRecropQueue={handleRecropList}
+                        onViewRecropTool={handleRecropToolAccess}
                         onDashboardUpdate={handleDashboardUpdate}
                     />
                 );
@@ -155,19 +203,13 @@ function App() {
                         </button>
                         <button 
                             className={`nav-btn ${currentPage === 'recroplist' ? 'active' : ''}`}
-                            onClick={handleRecropAccess}
+                            onClick={handleRecropList}
                         >
                             Blocks Needing Recrop
                         </button>
                         <button 
                             className={`nav-btn ${currentPage === 'recrop' ? 'active' : ''}`}
-                            onClick={() => {
-                                if (recropAccess) {
-                                    setCurrentPage('recrop');
-                                } else {
-                                    handleRecropAccess();
-                                }
-                            }}
+                            onClick={handleRecropToolAccess}
                         >
                             Block Recrop Tool
                         </button>

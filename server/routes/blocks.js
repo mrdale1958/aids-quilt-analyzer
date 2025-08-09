@@ -3,6 +3,42 @@ import express from 'express';
 export default function createBlockRoutes(db, consensusService) {
     const router = express.Router();
 
+    // Reinitialize a block: delete votes and reset block fields
+    router.patch('/:id/reinit', (req, res) => {
+        const blockId = req.params.id;
+        if (!/^[0-9]+$/.test(blockId)) {
+            return res.status(400).json({ error: 'Block ID must be a number' });
+        }
+        // Delete all votes for this block
+        db.run('DELETE FROM votes WHERE blockID = ?', [blockId], function(voteErr) {
+            if (voteErr) {
+                console.error('❌ Error deleting votes:', voteErr);
+                return res.status(500).json({ error: 'Database error deleting votes' });
+            }
+            // Reset block fields
+            const resetQuery = `
+                UPDATE blocks SET
+                    consensus_reached = 0,
+                    completed = 0,
+                    not8Panel = 0,
+                    not8PanelConfirmed = 0,
+                    needsRecrop = 0,
+                    vote_count = 0,
+                    final_orientation_data = NULL,
+                    orientation_data = NULL,
+                    updated_at = datetime('now')
+                WHERE blockID = ?
+            `;
+            db.run(resetQuery, [blockId], function(resetErr) {
+                if (resetErr) {
+                    console.error('❌ Error resetting block:', resetErr);
+                    return res.status(500).json({ error: 'Database error resetting block' });
+                }
+                res.json({ success: true, blockID: blockId });
+            });
+        });
+    });
+
     // Test route (this is working)
     router.get('/test', (req, res) => {
         res.json({ message: 'Blocks routes are working!', timestamp: new Date() });
@@ -30,13 +66,13 @@ export default function createBlockRoutes(db, consensusService) {
             // Use appropriate query based on available columns
             const query = hasConsensusReached ? 
                 `SELECT blockID, needsRecrop, completed, started, not8Panel, 
-                        orientation_data, ip_address, vote_count, consensus_reached
+                        orientation_data, ip_address, vote_count, consensus_reached, recropCompleted
                  FROM blocks 
                  WHERE consensus_reached = 0 OR consensus_reached IS NULL
                  ORDER BY RANDOM() 
                  LIMIT 1` :
                 `SELECT blockID, needsRecrop, completed, started, not8Panel, 
-                        orientation_data, ip_address, vote_count
+                        orientation_data, ip_address, vote_count, recropCompleted
                  FROM blocks 
                  WHERE completed = 0 OR completed IS NULL
                  ORDER BY RANDOM() 
@@ -344,7 +380,7 @@ export default function createBlockRoutes(db, consensusService) {
         
         const query = `
             SELECT blockID, needsRecrop, completed, started, not8Panel, 
-                   orientation_data, ip_address, vote_count, consensus_reached
+                   orientation_data, ip_address, vote_count, consensus_reached, recropCompleted
             FROM blocks 
             WHERE blockID = ?
         `;

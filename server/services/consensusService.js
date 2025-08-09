@@ -26,9 +26,30 @@ class ConsensusService {
                 
                 const votePatterns = {};
                 votes.forEach((vote, index) => {
-                    // If not8Panel, treat orientation as null/zeroed for consensus
+                    let orientationKey = null;
+                    
+                    if (vote.not8Panel === 1) {
+                        // For not8Panel votes, orientation doesn't matter
+                        orientationKey = null;
+                    } else {
+                        // Parse the orientation data and extract selectedPoints
+                        try {
+                            const orientationData = JSON.parse(vote.orientation_data);
+                            if (orientationData.selectedPoints && Array.isArray(orientationData.selectedPoints)) {
+                                // Sort the selectedPoints to treat them as an unordered set
+                                orientationKey = [...orientationData.selectedPoints].sort((a, b) => a - b).join(',');
+                            } else {
+                                console.warn(`Vote ${index + 1} has invalid selectedPoints:`, orientationData);
+                                orientationKey = vote.orientation_data; // fallback to original string comparison
+                            }
+                        } catch (parseErr) {
+                            console.warn(`Vote ${index + 1} has invalid JSON orientation_data:`, parseErr);
+                            orientationKey = vote.orientation_data; // fallback to original string comparison
+                        }
+                    }
+                    
                     const pattern = JSON.stringify({
-                        orientation: vote.not8Panel === 1 ? null : vote.orientation_data,
+                        orientation: orientationKey,
                         not8Panel: vote.not8Panel
                     });
                     console.log(`Vote ${index + 1} pattern:`, pattern);
@@ -62,14 +83,31 @@ class ConsensusService {
     updateBlockWithConsensus(blockID, consensusPattern, callback) {
         let updateQuery, params;
         const isNot8Panel = consensusPattern.not8Panel === 1;
-        const finalOrientation = isNot8Panel ? 'NON_STANDARD_BLOCK' : consensusPattern.orientation;
-        // Count not8Panel votes for this block
+        let finalOrientation;
+        
+        if (isNot8Panel) {
+            finalOrientation = 'NON_STANDARD_BLOCK';
+        } else {
+            // Convert the sorted comma-separated string back to a proper JSON format
+            if (consensusPattern.orientation) {
+                const pointsArray = consensusPattern.orientation.split(',').map(Number);
+                finalOrientation = JSON.stringify({
+                    selectedPoints: pointsArray,
+                    consensus: true,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                finalOrientation = 'UNKNOWN_ORIENTATION';
+            }
+        }
+        
+        // Count votes for this block (not just not8Panel votes)
         this.db.get(
-            'SELECT COUNT(*) as count FROM votes WHERE blockID = ? AND not8Panel = 1',
+            'SELECT COUNT(*) as count FROM votes WHERE blockID = ?',
             [blockID],
             (countErr, row) => {
                 if (countErr) {
-                    console.error(`❌ Error counting not8Panel votes for block ${blockID}:`, countErr);
+                    console.error(`❌ Error counting votes for block ${blockID}:`, countErr);
                     callback(countErr);
                     return;
                 }

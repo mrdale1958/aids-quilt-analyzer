@@ -7,7 +7,8 @@ const StatsPanel = ({
     not8PanelStats, 
     recropStats, 
     onViewNot8Panel, 
-    onViewRecropQueue 
+    onViewRecropQueue, 
+    onViewRecropTool
 }) => {
     return (
         <div className={styles.statsPanel}>
@@ -31,7 +32,7 @@ const StatsPanel = ({
                     <div className={`${styles.statRow} ${styles.highlight}`}>
                         <span className={styles.statLabel}>Consensus Reached:</span>
                         <span className={styles.statValue}>
-                            {(votingStats.standardCompleted || 0) + (votingStats.nonStandardCompleted || 0)}
+                            {votingStats.consensusReached || 0}
                         </span>
                     </div>
                 </div>
@@ -93,12 +94,21 @@ const StatsPanel = ({
                         </span>
                     </div>
                     {(recropStats.totalNeedingRecrop || 0) > 0 && (
-                        <button 
-                            className={styles.btnLink}
-                            onClick={onViewRecropQueue}
-                        >
-                            View Re-crop Queue →
-                        </button>
+                        <>
+                            <button 
+                                className={styles.btnLink}
+                                onClick={onViewRecropQueue}
+                            >
+                                View Re-crop Queue →
+                            </button>
+                            <button 
+                                className={styles.btnLink}
+                                style={{ marginLeft: 8 }}
+                                onClick={onViewRecropTool}
+                            >
+                                Open Recrop Tool
+                            </button>
+                        </>
                     )}
                 </div>
 

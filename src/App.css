@@ -458,6 +458,22 @@ main {
   transform: scale(1.2);
 }
 
+.checkbox-label.disabled {
+  color: #999;
+  cursor: not-allowed;
+}
+
+.checkbox-label.disabled input[type="checkbox"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.completion-note {
+  color: #28a745;
+  font-style: italic;
+  font-size: 0.9em;
+}
+
 .action-buttons {
   display: flex;
   flex-direction: column;

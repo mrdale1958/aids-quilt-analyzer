@@ -64,6 +64,30 @@ const Not8PanelPage = ({ onBack }) => {
         }
     };
 
+    const handleReinit = async (block) => {
+        if (!window.confirm(`Are you sure you want to reinitialize block #${block.blockID}? This will delete all votes and reset its status.`)) return;
+        setVerifying(prev => new Set(prev).add(block.blockID));
+        try {
+            const response = await fetch(`/api/blocks/${block.blockID}/reinit`, {
+                method: 'PATCH',
+            });
+            if (!response.ok) {
+                let msg = 'Failed to reinitialize block';
+                try {
+                    const errJson = await response.json();
+                    if (errJson && errJson.error) msg += `: ${errJson.error}`;
+                } catch {}
+                alert(msg);
+                return;
+            }
+            await fetchBlocks();
+        } catch (err) {
+            alert('Error reinitializing block: ' + err.message);
+        } finally {
+            setVerifying(prev => { const s = new Set(prev); s.delete(block.blockID); return s; });
+        }
+    };
+
     return (
         <div className={styles.not8panelPage}>
             <h2>Not 8-Panel Blocks</h2>
@@ -114,6 +138,14 @@ const Not8PanelPage = ({ onBack }) => {
                                                         onClick={() => handleConfirm(block)}
                                                     >
                                                         {verifying.has(block.blockID) ? 'Confirming...' : 'Confirm as Not 8-Panel'}
+                                                    </button>
+                                                    <button
+                                                        className={styles.confirmBtn}
+                                                        style={{ marginLeft: 8, background: '#b00' }}
+                                                        disabled={verifying.has(block.blockID)}
+                                                        onClick={() => handleReinit(block)}
+                                                    >
+                                                        {verifying.has(block.blockID) ? 'Working...' : 'Reinitialize Block'}
                                                     </button>
                                                 </td>
                                             </tr>

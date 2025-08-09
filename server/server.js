@@ -16,6 +16,7 @@ console.log('✅ createBlockRoutes imported:', typeof createBlockRoutes);
 import createStatsRoutes from './routes/stats.js';
 import createOrientationRoutes from './routes/orientation.js';
 import createRecropRoutes from './routes/recrop.js';
+import createRecropToolApi from './routes/recrop-tool-api.js';
 
 // ES module compatibility
 const __filename = fileURLToPath(import.meta.url);
@@ -69,6 +70,9 @@ console.log('✅ Orientation routes mounted at /api');
 
 app.use('/api', createRecropRoutes(db, imageService));
 console.log('✅ Recrop routes mounted at /api');
+
+app.use('/api', createRecropToolApi(db));
+console.log('✅ Recrop Tool API mounted at /api');
 
 // Image proxy route
 app.get('/api/image/:blockId', async (req, res) => {

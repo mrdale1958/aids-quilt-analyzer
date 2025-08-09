@@ -9,6 +9,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
     const [currentBlock, setCurrentBlock] = useState(null);
     const [selectedPoints, setSelectedPoints] = useState([]);
     const [needsRecrop, setNeedsRecrop] = useState(false);
+    const [isRecropCompleted, setIsRecropCompleted] = useState(false);
     const [not8Panel, setNot8Panel] = useState(false);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -53,6 +54,22 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
         }
     }, [canvasRef.current, pendingImageLoad]);
 
+    // Handle blockData prop changes
+    useEffect(() => {
+        if (blockData) {
+            setCurrentBlock(blockData);
+            setNeedsRecrop(blockData.needsRecrop === 1);
+            setIsRecropCompleted(blockData.recropCompleted === 1);
+            setNot8Panel(blockData.not8Panel === 1);
+            if (canvasRef.current) {
+                loadImage(blockData.blockID);
+            } else {
+                setPendingImageLoad(blockData.blockID);
+                setLoading(false);
+            }
+        }
+    }, [blockData]);
+
     useEffect(() => {
         if (blockId) {
             loadBlock(blockId);
@@ -70,6 +87,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
         // Clear points when loading new block
         setSelectedPoints([]);
         setNeedsRecrop(false);
+        setIsRecropCompleted(false);
         setNot8Panel(false);
         
         try {
@@ -79,6 +97,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
                 const blockData = await response.json();
                 setCurrentBlock(blockData);
                 setNeedsRecrop(blockData.needsRecrop === 1);
+                setIsRecropCompleted(blockData.recropCompleted === 1);
                 
                 // Check if canvas is ready, if not, store the blockID for later
                 if (canvasRef.current) {
@@ -103,6 +122,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
         // Clear points when loading new block
         setSelectedPoints([]);
         setNeedsRecrop(false);
+        setIsRecropCompleted(false);
         setNot8Panel(false);
         
         try {
@@ -113,6 +133,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
                 if (blockData) {
                     setCurrentBlock(blockData);
                     setNeedsRecrop(blockData.needsRecrop === 1);
+                    setIsRecropCompleted(blockData.recropCompleted === 1);
                     
                     // Check if canvas is ready, if not, store the blockID for later
                     if (canvasRef.current) {
@@ -364,13 +385,15 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
                         )}
                         
                         <div className="checkboxes">
-                            <label className="checkbox-label">
+                            <label className={`checkbox-label ${isRecropCompleted ? 'disabled' : ''}`}>
                                 <input
                                     type="checkbox"
                                     checked={needsRecrop}
+                                    disabled={isRecropCompleted}
                                     onChange={(e) => setNeedsRecrop(e.target.checked)}
                                 />
                                 This block needs re-cropping
+                                {isRecropCompleted && <span className="completion-note"> (Already recropped)</span>}
                             </label>
                             
                             <label className="checkbox-label">

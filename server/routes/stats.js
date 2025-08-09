@@ -102,6 +102,13 @@ export default function createStatsRoutes(db) {
                                     return res.status(500).json({ error: 'Database error' });
                                 }
 
+                                // Get non-standard completed count
+                                db.get('SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1 AND consensus_reached = 1', (err, nonStandardCompletedResult) => {
+                                    if (err) {
+                                        console.error('Error getting nonStandardCompleted:', err);
+                                        return res.status(500).json({ error: 'Database error' });
+                                    }
+
                                 // Process results
                                 const breakdown = {
                                     oneVote: 0,
@@ -141,7 +148,8 @@ export default function createStatsRoutes(db) {
 
                                     // New fields for standard blocks
                                     standardBlocks: standardBlocksResult.count || 0,
-                                    standardCompleted: standardCompletedResult.count || 0
+                                    standardCompleted: standardCompletedResult.count || 0,
+                                    nonStandardCompleted: nonStandardCompletedResult.count || 0
                                 };
 
                                 console.log('📊 Complete voting stats:', stats);
@@ -152,11 +160,45 @@ export default function createStatsRoutes(db) {
                                 });
 
                                 res.json(stats);
+                                });
                             });
                         });
                     });
                 });
             });
+        });
+    });
+    
+    // Get blocks with multiple votes but no consensus
+    router.get('/multivote-blocks', (req, res) => {
+        console.log('📊 Getting blocks with multiple votes but no consensus...');
+        
+        const query = `
+            SELECT 
+                b.blockID,
+                b.vote_count,
+                b.consensus_reached,
+                b.not8Panel,
+                b.needsRecrop,
+                b.updated_at,
+                GROUP_CONCAT(v.orientation_data) as all_orientations,
+                GROUP_CONCAT(v.needsRecrop) as all_needsRecrop,
+                GROUP_CONCAT(v.not8Panel) as all_not8Panel
+            FROM blocks b
+            INNER JOIN votes v ON b.blockID = v.blockID
+            WHERE b.vote_count >= 2 AND (b.consensus_reached = 0 OR b.consensus_reached IS NULL)
+            GROUP BY b.blockID
+            ORDER BY b.vote_count DESC, b.blockID ASC
+        `;
+        
+        db.all(query, (err, rows) => {
+            if (err) {
+                console.error('Error getting multi-vote blocks:', err);
+                return res.status(500).json({ error: 'Database error' });
+            }
+            
+            console.log(`📋 Found ${rows.length} blocks with multiple votes but no consensus`);
+            res.json(rows);
         });
     });
     

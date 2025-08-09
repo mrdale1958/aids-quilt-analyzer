@@ -1,188 +1,109 @@
-import React, { useState, useRef, useEffect } from 'react';
 
-const RecropPage = ({ onBack }) => {
-    const canvasRef = useRef(null);
+import React, { useState, useEffect, useCallback, memo } from 'react';
+import CropCanvas from './CropCanvas';
+import CropControls from './CropControls';
+
+const RecropPage = memo(({ onBack }) => {
     const [currentBlock, setCurrentBlock] = useState(null);
+    const [skipCount, setSkipCount] = useState(0);
+    const [lastTriedBlock, setLastTriedBlock] = useState(null); // for debug
+    const SKIP_LIMIT = 5;
     const [cropCorners, setCropCorners] = useState([]);
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragIndex, setDragIndex] = useState(-1);
     const [loading, setLoading] = useState(true);
+    const [imageLoading, setImageLoading] = useState(false);
     const [processing, setProcessing] = useState(false);
     const [previewMode, setPreviewMode] = useState(false);
+    const [previewUrl, setPreviewUrl] = useState(null);
     const [sessionCount, setSessionCount] = useState(0);
 
-    useEffect(() => {
-        loadNextRecropBlock();
-        
-        // Get session count from localStorage
-        const count = localStorage.getItem('sessionRecropCount') || 0;
-        setSessionCount(parseInt(count));
-    }, []);
-
-    const loadNextRecropBlock = async () => {
+    const loadNextRecropBlock = useCallback(async () => {
         setLoading(true);
         setCropCorners([]);
         setPreviewMode(false);
-        
+        setPreviewUrl(null);
         try {
             const response = await fetch('/api/block/recrop/next');
             if (response.ok) {
                 const blockData = await response.json();
                 if (blockData) {
+                    console.log('✅ RecropPage: Received block from backend:', blockData);
                     setCurrentBlock(blockData);
-                    loadImage(blockData.blockID);
+                    setLastTriedBlock(blockData);
+                    setLoading(false); // Stop loading once we have the block data
                 } else {
                     alert('No more blocks need re-cropping!');
+                    setCurrentBlock(null);
+                    setLoading(false);
                     onBack();
                 }
             } else {
-                throw new Error('Failed to load next recrop block');
+                // Try to get error details from backend
+                let errorMsg = 'Failed to load next recrop block';
+                try {
+                    const text = await response.text();
+                    try {
+                        const errData = JSON.parse(text);
+                        if (errData && errData.error && errData.block) {
+                            errorMsg = `No image found for block ${errData.block.blockID}. Block data: ` + JSON.stringify(errData.block, null, 2);
+                        } else if (errData && errData.error) {
+                            errorMsg = errData.error;
+                        } else {
+                            errorMsg = text;
+                        }
+                    } catch {
+                        errorMsg = text;
+                    }
+                } catch (e) {
+                    errorMsg = 'Failed to load next recrop block (network or server error)';
+                }
+                alert(errorMsg);
+                setLoading(false);
             }
         } catch (error) {
             console.error('Error loading recrop block:', error);
             setLoading(false);
         }
+    }, [onBack]);
+
+    // Load the next recrop block on mount
+    useEffect(() => {
+        loadNextRecropBlock();
+        // Get session count from localStorage
+        const count = localStorage.getItem('sessionRecropCount') || 0;
+        setSessionCount(parseInt(count));
+    }, [loadNextRecropBlock]);
+
+    const padBlockId = (id) => String(id).padStart(5, '0');
+
+    const getImageUrl = (blockId) => {
+        if (!blockId) return null;
+        const paddedId = padBlockId(blockId);
+        return `/api/image/${paddedId}`;
     };
 
-    const loadImage = (blockId) => {
-        console.log(`🖼️ Loading image for recrop block ${blockId}`);
+    const handleImageLoaded = () => {
+        console.log('✅ RecropPage: Image loaded successfully');
+        setImageLoading(false);
+        setSkipCount(0); // reset skip count on success
+    };
+
+    const handleImageLoadStart = () => {
+        console.log('🔄 RecropPage: Image loading started');
+        setImageLoading(true);
+    };
+
+    const handleImageError = (error) => {
+        console.error('❌ RecropPage: Image load failed:', error);
+        setImageLoading(false);
+        setSkipCount(prev => prev + 1);
         
-        const canvas = canvasRef.current;
-        if (!canvas) {
-            console.error('❌ Canvas ref is null');
-            return;
+        if (skipCount + 1 >= SKIP_LIMIT) {
+            alert(`No valid images found after ${SKIP_LIMIT} attempts. Stopping.`);
+            setCurrentBlock(null);
+        } else {
+            const paddedId = currentBlock ? padBlockId(currentBlock.blockID) : '';
+            alert(`Image failed to load. URL: /api/image/${paddedId}. Check network tab for details.`);
         }
-
-        const ctx = canvas.getContext('2d');
-        
-        // Clear canvas first
-        ctx.clearRect(0, 0, 512, 512);
-        
-        // Create image element
-        const img = new Image();
-        
-        img.onload = () => {
-            console.log(`✅ Image loaded for recrop block ${blockId}`);
-            ctx.drawImage(img, 0, 0, 512, 512);
-            
-            // Initialize default crop corners (full image)
-            setCropCorners([
-                { x: 50, y: 50 },   // Top-left
-                { x: 462, y: 50 },  // Top-right  
-                { x: 462, y: 462 }, // Bottom-right
-                { x: 50, y: 462 }   // Bottom-left
-            ]);
-            
-            setLoading(false);
-        };
-        
-        img.onerror = (error) => {
-            console.error(`❌ Failed to load image for block ${blockId}:`, error);
-            
-            // Draw placeholder
-            ctx.fillStyle = '#f0f0f0';
-            ctx.fillRect(0, 0, 512, 512);
-            ctx.strokeStyle = '#ddd';
-            ctx.lineWidth = 2;
-            ctx.strokeRect(1, 1, 510, 510);
-            
-            ctx.fillStyle = '#999';
-            ctx.font = 'bold 24px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Block ${blockId}`, 256, 240);
-            ctx.font = '16px Arial';
-            ctx.fillStyle = '#666';
-            ctx.fillText('Image not available', 256, 270);
-            
-            setLoading(false);
-        };
-        
-        const imageUrl = `/api/image/${blockId}`;
-        console.log(`🚀 Setting image src to: ${imageUrl}`);
-        img.src = imageUrl;
-    };
-
-    const drawCropOverlay = () => {
-        const canvas = canvasRef.current;
-        if (!canvas || cropCorners.length !== 4) return;
-
-        const ctx = canvas.getContext('2d');
-        
-        // Draw crop boundary
-        ctx.strokeStyle = '#ff0000';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
-        for (let i = 1; i < 4; i++) {
-            ctx.lineTo(cropCorners[i].x, cropCorners[i].y);
-        }
-        ctx.closePath();
-        ctx.stroke();
-
-        // Draw corner handles
-        cropCorners.forEach((corner, index) => {
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(corner.x - 5, corner.y - 5, 10, 10);
-            
-            // Add corner labels
-            ctx.fillStyle = '#000';
-            ctx.font = '12px Arial';
-            ctx.fillText(index + 1, corner.x + 8, corner.y - 8);
-        });
-
-        // Draw semi-transparent overlay outside crop area
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(0, 0, 512, 512);
-        
-        // Clear the crop area
-        ctx.globalCompositeOperation = 'destination-out';
-        ctx.beginPath();
-        ctx.moveTo(cropCorners[0].x, cropCorners[0].y);
-        for (let i = 1; i < 4; i++) {
-            ctx.lineTo(cropCorners[i].x, cropCorners[i].y);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.globalCompositeOperation = 'source-over';
-    };
-
-    const handleCanvasMouseDown = (e) => {
-        if (cropCorners.length !== 4) return;
-
-        const rect = canvasRef.current.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
-
-        // Check if clicking near any corner
-        for (let i = 0; i < cropCorners.length; i++) {
-            const corner = cropCorners[i];
-            const distance = Math.sqrt(
-                Math.pow(mouseX - corner.x, 2) + Math.pow(mouseY - corner.y, 2)
-            );
-            
-            if (distance <= 10) {
-                setIsDragging(true);
-                setDragIndex(i);
-                return;
-            }
-        }
-    };
-
-    const handleCanvasMouseMove = (e) => {
-        if (!isDragging || dragIndex === -1) return;
-
-        const rect = canvasRef.current.getBoundingClientRect();
-        const mouseX = Math.max(0, Math.min(512, e.clientX - rect.left));
-        const mouseY = Math.max(0, Math.min(512, e.clientY - rect.top));
-
-        const newCorners = [...cropCorners];
-        newCorners[dragIndex] = { x: mouseX, y: mouseY };
-        setCropCorners(newCorners);
-    };
-
-    const handleCanvasMouseUp = () => {
-        setIsDragging(false);
-        setDragIndex(-1);
     };
 
     const handlePreviewCrop = async () => {
@@ -207,16 +128,7 @@ const RecropPage = ({ onBack }) => {
             if (response.ok) {
                 const result = await response.json();
                 setPreviewMode(true);
-                
-                // Load preview image
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = canvasRef.current;
-                    const ctx = canvas.getContext('2d');
-                    ctx.clearRect(0, 0, 512, 512);
-                    ctx.drawImage(img, 0, 0, 512, 512);
-                };
-                img.src = result.previewUrl + '?t=' + Date.now(); // Cache bust
+                setPreviewUrl(result.previewUrl + '?t=' + Date.now());
             } else {
                 throw new Error('Failed to generate preview');
             }
@@ -272,24 +184,28 @@ const RecropPage = ({ onBack }) => {
 
     const resetCrop = () => {
         setPreviewMode(false);
-        if (currentBlock) {
-            loadImage(currentBlock.blockID);
-        }
+        setPreviewUrl(null);
     };
 
-    // Redraw overlay when corners change
-    useEffect(() => {
-        if (!previewMode && cropCorners.length === 4) {
-            // Small delay to ensure image is drawn first
-            setTimeout(drawCropOverlay, 10);
-        }
-    }, [cropCorners, previewMode]);
-
     if (loading) {
+        // Always show zero-padded image URL in debug
+        const paddedId = lastTriedBlock && lastTriedBlock.blockID ? padBlockId(lastTriedBlock.blockID) : '';
         return (
             <div className="recrop-loading">
                 <h2>Loading block for re-cropping...</h2>
                 <div className="spinner"></div>
+                {lastTriedBlock && (
+                    <div style={{marginTop: 12, color: '#888', fontSize: 14}}>
+                        <div>Block ID: {lastTriedBlock.blockID}</div>
+                        <div>Image URL: /api/image/{paddedId}</div>
+                        <div>Skip attempt: {skipCount}/{SKIP_LIMIT}</div>
+                        <div style={{marginTop: 8}}>
+                            <pre style={{fontSize: 12, color: '#666', background: '#f8f8f8', padding: 4, borderRadius: 4, maxWidth: 400, overflowX: 'auto'}}>
+                                {JSON.stringify(lastTriedBlock.currentBlock, null, 2)}
+                            </pre>
+                        </div>
+                    </div>
+                )}
             </div>
         );
     }
@@ -298,6 +214,18 @@ const RecropPage = ({ onBack }) => {
         return (
             <div className="recrop-error">
                 <h2>No blocks available for re-cropping</h2>
+                {lastTriedBlock && (
+                    <div style={{marginTop: 12, color: '#888', fontSize: 14}}>
+                        <div>Last tried Block ID: {lastTriedBlock.blockID}</div>
+                        <div>Image URL: {lastTriedBlock.imageUrl}</div>
+                        <div>Skip attempts: {skipCount}/{SKIP_LIMIT}</div>
+                        <div style={{marginTop: 8}}>
+                            <pre style={{fontSize: 12, color: '#666', background: '#f8f8f8', padding: 4, borderRadius: 4, maxWidth: 400, overflowX: 'auto'}}>
+                                {JSON.stringify(lastTriedBlock.currentBlock, null, 2)}
+                            </pre>
+                        </div>
+                    </div>
+                )}
                 <button onClick={onBack} className="btn-primary">
                     Back to Dashboard
                 </button>
@@ -318,79 +246,33 @@ const RecropPage = ({ onBack }) => {
             </div>
 
             <div className="recrop-content">
-                <div className="image-container">
-                    <canvas 
-                        ref={canvasRef}
-                        width="512" 
-                        height="512"
-                        className="recrop-canvas"
-                        onMouseDown={handleCanvasMouseDown}
-                        onMouseMove={handleCanvasMouseMove}
-                        onMouseUp={handleCanvasMouseUp}
-                        style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
-                    />
-                </div>
+                <CropCanvas
+                    imageUrl={previewMode && previewUrl ? 
+                        previewUrl : 
+                        getImageUrl(currentBlock?.blockID)
+                    }
+                    cropCorners={cropCorners}
+                    onCropChange={setCropCorners}
+                    previewMode={previewMode}
+                    onImageLoadStart={handleImageLoadStart}
+                    onImageLoaded={handleImageLoaded}
+                    onImageError={handleImageError}
+                />
 
-                <div className="recrop-controls">
-                    <div className="control-section">
-                        <h3>Crop Instructions</h3>
-                        <ol>
-                            <li>Drag the red corner handles to define the crop area</li>
-                            <li>The crop should tightly frame the quilt block</li>
-                            <li>Preview the crop to see the result</li>
-                            <li>Accept to apply the crop to the high-resolution image</li>
-                        </ol>
-                        
-                        {previewMode && (
-                            <div className="preview-info">
-                                <p><strong>Preview Mode:</strong> This shows how the cropped image will look.</p>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="action-buttons">
-                        {!previewMode ? (
-                            <>
-                                <button
-                                    className="btn-secondary"
-                                    onClick={handlePreviewCrop}
-                                    disabled={processing || cropCorners.length !== 4}
-                                >
-                                    {processing ? 'Generating Preview...' : 'Preview Crop'}
-                                </button>
-                                
-                                <button
-                                    className="btn-secondary"
-                                    onClick={loadNextRecropBlock}
-                                    disabled={processing}
-                                >
-                                    Skip Block
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <button
-                                    className="btn-primary"
-                                    onClick={handleAcceptCrop}
-                                    disabled={processing}
-                                >
-                                    {processing ? 'Processing...' : 'Accept Crop'}
-                                </button>
-                                
-                                <button
-                                    className="btn-secondary"
-                                    onClick={resetCrop}
-                                    disabled={processing}
-                                >
-                                    Reset
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
+                <CropControls
+                    previewMode={previewMode}
+                    processing={processing}
+                    cropCorners={cropCorners}
+                    onPreview={handlePreviewCrop}
+                    onAccept={handleAcceptCrop}
+                    onReset={resetCrop}
+                    onSkip={loadNextRecropBlock}
+                />
             </div>
         </div>
     );
-};
+});
+
+RecropPage.displayName = 'RecropPage';
 
 export default RecropPage;

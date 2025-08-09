@@ -9,10 +9,12 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     const [stats, setStats] = useState({});
     const [votingStats, setVotingStats] = useState({});
     const [not8PanelStats, setNot8PanelStats] = useState({ confirmed: 0, pending: 0 });
-    const [recropStats, setRecropStats] = useState({ needsRecrop: 0 });
+    const [recropStats, setRecropStats] = useState({ totalNeedingRecrop: 0, totalRecropped: 0 });
     const [nextBlock, setNextBlock] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [showMultiVoteModal, setShowMultiVoteModal] = useState(false);
+    const [multiVoteBlocks, setMultiVoteBlocks] = useState([]);
     
     // Add debug logging for state changes
     console.log('🔍 Current loading state:', isLoading);
@@ -41,7 +43,8 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
                     fetchStats(),
                     fetchVotingStats(),
                     fetchNot8PanelStats(),
-                    fetchRecropStats()
+                    fetchRecropStats(),
+                    fetchMultiVoteBlocks()
                 ]);
                 
                 console.log('🎉 All data loaded successfully');
@@ -161,21 +164,45 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     const fetchRecropStats = async () => {
         try {
             console.log('🔄 Fetching recrop stats...');
-            const response = await fetch('/api/blocks/recrop');
+            const response = await fetch('/api/recrop/stats');
             if (response.ok) {
                 const data = await response.json();
-                console.log('📊 Recrop stats:', data.length, 'blocks');
+                console.log('📊 Recrop stats:', data);
                 setRecropStats({
-                    needsRecrop: Array.isArray(data) ? data.length : 0
+                    totalNeedingRecrop: data.totalNeedingRecrop || 0,
+                    totalRecropped: data.totalRecropped || 0
                 });
             } else {
                 console.error('❌ Failed to fetch recrop stats:', response.status);
-                setRecropStats({ needsRecrop: 0 });
+                setRecropStats({ totalNeedingRecrop: 0, totalRecropped: 0 });
             }
         } catch (error) {
             console.error('❌ Error fetching recrop stats:', error);
-            setRecropStats({ needsRecrop: 0 });
+            setRecropStats({ totalNeedingRecrop: 0, totalRecropped: 0 });
         }
+    };
+
+    const fetchMultiVoteBlocks = async () => {
+        try {
+            console.log('🔄 Fetching multi-vote blocks...');
+            const response = await fetch('/api/stats/multivote-blocks');
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📊 Multi-vote blocks:', data);
+                setMultiVoteBlocks(data);
+            } else {
+                console.error('❌ Failed to fetch multi-vote blocks:', response.status);
+                setMultiVoteBlocks([]);
+            }
+        } catch (error) {
+            console.error('❌ Error fetching multi-vote blocks:', error);
+            setMultiVoteBlocks([]);
+        }
+    };
+
+    const handleShowMultiVoteModal = () => {
+        fetchMultiVoteBlocks();
+        setShowMultiVoteModal(true);
     };
 
     const handleStartAnalyzing = () => {
@@ -251,7 +278,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     color: 'white', 
     padding: '30px', 
     margin: '20px 0',
-    border: '3px solid red'
+    border: '3px solid white'
 }}>
     <h2 style={{color: 'white', fontSize: '28px'}}>AIDS Quilt Analysis Dashboard</h2>
     <p style={{color: 'white'}}>Help analyze quilt blocks using our quality control voting system</p>
@@ -309,9 +336,9 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
                                 <span className={styles.voteNumber}>{votingStats.blocksWithOneVote || 0}</span>
                                 <span className={styles.voteLabel}>Blocks Need 2nd Vote</span>
                             </div>
-                            <div className={styles.voteStat}>
-                                <span className={styles.voteNumber}>{(votingStats.blocksWithTwoVotes || 0) + (votingStats.blocksWithThreeOrMore || 0)}</span>
-                                <span className={styles.voteLabel}>Multi-Vote Blocks</span>
+                            <div className={styles.voteStat} onClick={handleShowMultiVoteModal} style={{ cursor: 'pointer' }}>
+                                <span className={styles.voteNumber}>{multiVoteBlocks.length}</span>
+                                <span className={styles.voteLabel}>Multi-Vote Blocks Need Review (click to view)</span>
                             </div>
                             <div className={styles.voteStat}>
                                 <span className={styles.voteNumber}>{votingStats.consensusReached || 0}</span>
@@ -340,7 +367,56 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
                 recropStats={recropStats}
                 onViewNot8Panel={onViewNot8Panel}
                 onViewRecropQueue={onViewRecropQueue}
+                onViewRecropTool={typeof onViewRecropTool === 'function' ? onViewRecropTool : undefined}
             />
+            
+            {/* Multi-Vote Blocks Modal */}
+            {showMultiVoteModal && (
+                <div className={styles.modalOverlay} onClick={() => setShowMultiVoteModal(false)}>
+                    <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <h3>Blocks with Multiple Votes (No Consensus)</h3>
+                            <button 
+                                className={styles.modalClose}
+                                onClick={() => setShowMultiVoteModal(false)}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            {multiVoteBlocks.length === 0 ? (
+                                <p>No blocks with multiple votes found.</p>
+                            ) : (
+                                <div className={styles.blocksList}>
+                                    {multiVoteBlocks.map(block => (
+                                        <div key={block.blockID} className={styles.blockItem}>
+                                            <div className={styles.blockHeader}>
+                                                <span className={styles.blockId}>Block #{block.blockID}</span>
+                                                <span className={styles.voteCount}>{block.vote_count} votes</span>
+                                                <button 
+                                                    className={styles.analyzeBlockBtn}
+                                                    onClick={() => {
+                                                        onAnalyzeBlock(block);
+                                                        setShowMultiVoteModal(false);
+                                                    }}
+                                                >
+                                                    Analyze
+                                                </button>
+                                            </div>
+                                            <div className={styles.blockDetails}>
+                                                <p><strong>Orientations:</strong> {block.all_orientations || 'N/A'}</p>
+                                                <p><strong>Needs Recrop:</strong> {block.all_needsRecrop || 'N/A'}</p>
+                                                <p><strong>Not 8-Panel:</strong> {block.all_not8Panel || 'N/A'}</p>
+                                                <p><strong>Last Updated:</strong> {new Date(block.updated_at).toLocaleDateString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
                 
         </div>
     );

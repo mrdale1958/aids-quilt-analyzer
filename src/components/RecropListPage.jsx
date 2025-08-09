@@ -142,7 +142,7 @@ const RecropListPage = ({ onBack }) => {
                         
                         <div className="block-image">
                             <img 
-                                src={`/api/image/${block.blockID}`}
+                                src={`/api/image/${String(block.blockID).padStart(5, '0')}`}
                                 alt={`Block ${block.blockID}`}
                                 onError={(e) => {
                                     e.target.src = '/images/placeholder.png';
