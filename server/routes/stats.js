@@ -43,7 +43,7 @@ export default function createStatsRoutes(db) {
                 console.error('Error getting total votes:', err);
                 return res.status(500).json({ error: 'Database error' });
             }
-            
+
             // Get blocks by vote count
             const voteCountQuery = `
                 SELECT 
@@ -62,22 +62,20 @@ export default function createStatsRoutes(db) {
                 )
                 GROUP BY category
             `;
-            
+
             db.all(voteCountQuery, (err, voteResults) => {
                 if (err) {
                     console.error('Error getting vote breakdown:', err);
                     return res.status(500).json({ error: 'Database error' });
                 }
-                
-                console.log('📊 Vote breakdown by category:', voteResults);
-                
+
                 // Get consensus reached count
                 db.get('SELECT COUNT(*) as consensusReached FROM blocks WHERE consensus_reached = 1', (err, consensusResult) => {
                     if (err) {
                         console.error('Error getting consensus count:', err);
                         return res.status(500).json({ error: 'Database error' });
                     }
-                    
+
                     // Get special flag counts
                     db.all(`
                         SELECT 
@@ -91,53 +89,71 @@ export default function createStatsRoutes(db) {
                             console.error('Error getting flag counts:', err);
                             return res.status(500).json({ error: 'Database error' });
                         }
-                        
-                        // Process results
-                        const breakdown = {
-                            oneVote: 0,
-                            twoVotes: 0, 
-                            threeOrMore: 0,
-                            oneVoteTotal: 0,
-                            twoVoteTotal: 0,
-                            threeOrMoreTotal: 0
-                        };
-                        
-                        voteResults.forEach(row => {
-                            breakdown[row.category] = row.count || 0;
-                            breakdown[row.category + 'Total'] = row.total_votes_in_category || 0;
+
+                        // Get standard block counts
+                        db.get('SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 0 OR not8Panel IS NULL', (err, standardBlocksResult) => {
+                            if (err) {
+                                console.error('Error getting standardBlocks:', err);
+                                return res.status(500).json({ error: 'Database error' });
+                            }
+                            db.get('SELECT COUNT(*) as count FROM blocks WHERE (not8Panel = 0 OR not8Panel IS NULL) AND consensus_reached = 1', (err, standardCompletedResult) => {
+                                if (err) {
+                                    console.error('Error getting standardCompleted:', err);
+                                    return res.status(500).json({ error: 'Database error' });
+                                }
+
+                                // Process results
+                                const breakdown = {
+                                    oneVote: 0,
+                                    twoVotes: 0, 
+                                    threeOrMore: 0,
+                                    oneVoteTotal: 0,
+                                    twoVoteTotal: 0,
+                                    threeOrMoreTotal: 0
+                                };
+
+                                voteResults.forEach(row => {
+                                    breakdown[row.category] = row.count || 0;
+                                    breakdown[row.category + 'Total'] = row.total_votes_in_category || 0;
+                                });
+
+                                const stats = {
+                                    totalVotes: totalResult.totalVotes || 0,
+                                    blocksWithOneVote: breakdown.oneVote,
+                                    blocksWithTwoVotes: breakdown.twoVotes,
+                                    blocksWithThreeOrMore: breakdown.threeOrMore,
+                                    consensusReached: consensusResult.consensusReached || 0,
+
+                                    // Vote totals by category
+                                    votesFromOneVoteBlocks: breakdown.oneVoteTotal,
+                                    votesFromTwoVoteBlocks: breakdown.twoVoteTotal, 
+                                    votesFromThreeOrMoreBlocks: breakdown.threeOrMoreTotal,
+
+                                    // Flag-specific stats
+                                    not8PanelVotes: flagResults[0].not8PanelVotes || 0,
+                                    needsRecropVotes: flagResults[0].needsRecropVotes || 0,
+                                    uniqueNot8PanelBlocks: flagResults[0].uniqueNot8PanelBlocks || 0,
+                                    uniqueNeedsRecropBlocks: flagResults[0].uniqueNeedsRecropBlocks || 0,
+
+                                    // Calculated fields
+                                    totalUniqueBlocksVoted: breakdown.oneVote + breakdown.twoVotes + breakdown.threeOrMore,
+                                    accountedVotes: breakdown.oneVoteTotal + breakdown.twoVoteTotal + breakdown.threeOrMoreTotal,
+
+                                    // New fields for standard blocks
+                                    standardBlocks: standardBlocksResult.count || 0,
+                                    standardCompleted: standardCompletedResult.count || 0
+                                };
+
+                                console.log('📊 Complete voting stats:', stats);
+                                console.log('📊 Vote accounting check:', {
+                                    totalVotes: stats.totalVotes,
+                                    accountedVotes: stats.accountedVotes,
+                                    difference: stats.totalVotes - stats.accountedVotes
+                                });
+
+                                res.json(stats);
+                            });
                         });
-                        
-                        const stats = {
-                            totalVotes: totalResult.totalVotes || 0,
-                            blocksWithOneVote: breakdown.oneVote,
-                            blocksWithTwoVotes: breakdown.twoVotes,
-                            blocksWithThreeOrMore: breakdown.threeOrMore,
-                            consensusReached: consensusResult.consensusReached || 0,
-                            
-                            // Vote totals by category
-                            votesFromOneVoteBlocks: breakdown.oneVoteTotal,
-                            votesFromTwoVoteBlocks: breakdown.twoVoteTotal, 
-                            votesFromThreeOrMoreBlocks: breakdown.threeOrMoreTotal,
-                            
-                            // Flag-specific stats
-                            not8PanelVotes: flagResults[0].not8PanelVotes || 0,
-                            needsRecropVotes: flagResults[0].needsRecropVotes || 0,
-                            uniqueNot8PanelBlocks: flagResults[0].uniqueNot8PanelBlocks || 0,
-                            uniqueNeedsRecropBlocks: flagResults[0].uniqueNeedsRecropBlocks || 0,
-                            
-                            // Calculated fields
-                            totalUniqueBlocksVoted: breakdown.oneVote + breakdown.twoVotes + breakdown.threeOrMore,
-                            accountedVotes: breakdown.oneVoteTotal + breakdown.twoVoteTotal + breakdown.threeOrMoreTotal
-                        };
-                        
-                        console.log('📊 Complete voting stats:', stats);
-                        console.log('📊 Vote accounting check:', {
-                            totalVotes: stats.totalVotes,
-                            accountedVotes: stats.accountedVotes,
-                            difference: stats.totalVotes - stats.accountedVotes
-                        });
-                        
-                        res.json(stats);
                     });
                 });
             });
@@ -287,12 +303,8 @@ export default function createStatsRoutes(db) {
             
             const queries = {
                 totalNonStandard: "SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1",
-                nonStandardCompleted: hasConsensusReached ? 
-                    "SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1 AND consensus_reached = 1" :
-                    "SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1 AND completed = 1",
-                nonStandardNeedingVotes: hasConsensusReached ?
-                    "SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1 AND consensus_reached = 0" :
-                    "SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1 AND completed = 0"
+                nonStandardCompleted: "SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1 AND not8PanelConfirmed = 1",
+                nonStandardNeedingVotes: "SELECT COUNT(*) as count FROM blocks WHERE not8Panel = 1 AND not8PanelConfirmed = 0"
             };
             
             const results = {};

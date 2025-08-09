@@ -59,9 +59,9 @@ export default function createBlockRoutes(db, consensusService) {
         });
     });
 
-    // Get confirmed non-standard blocks - MOVE BEFORE SPECIFIC BLOCK ROUTE
-    router.get('/nonstandard', (req, res) => {
-        console.log('📊 API: Getting confirmed non-standard blocks...');
+    // Get confirmed not8Panel blocks - MOVE BEFORE SPECIFIC BLOCK ROUTE
+    router.get('/not8panel', (req, res) => {
+        console.log('📊 API: Getting confirmed not8Panel blocks...');
         
         db.all("PRAGMA table_info(blocks)", (err, columns) => {
             if (err) {
@@ -142,9 +142,9 @@ export default function createBlockRoutes(db, consensusService) {
         });
     });
 
-    // Get pending non-standard blocks
-    router.get('/nonstandard/pending', (req, res) => {
-        console.log('📊 API: Getting pending non-standard blocks...');
+    // Get pending not8Panel blocks
+    router.get('/not8panel/pending', (req, res) => {
+        console.log('📊 API: Getting pending not8Panel blocks...');
         
         // Check if votes table exists
         db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='votes'", (err, table) => {
@@ -282,47 +282,51 @@ export default function createBlockRoutes(db, consensusService) {
         });
     });
 
-    // Update non-standard flag for a specific block
-    router.patch('/:id/nonstandard', (req, res) => {
+    // Update not8Panel flag for a specific block
+    router.patch('/:id/not8panel', (req, res) => {
         const blockId = req.params.id;
         const { not8Panel, verifiedBy, timestamp } = req.body;
-        
-        console.log('🔧 Updating non-standard flag for block:', blockId);
+
+        console.log('🔧 Updating not8Panel flag for block:', blockId);
         console.log('   - not8Panel:', not8Panel);
         console.log('   - verifiedBy:', verifiedBy);
-        
+
         const updateQuery = `
             UPDATE blocks 
-            SET not8Panel = ?, 
+            SET not8Panel = 1,
+                not8PanelConfirmed = 1,
+                consensus_reached = 1,
                 updated_at = datetime('now'),
                 verified_by = ?,
                 verified_at = ?
             WHERE blockID = ?
         `;
-        
-        db.run(updateQuery, [not8Panel, verifiedBy, timestamp, blockId], function(err) {
+
+        db.run(updateQuery, [verifiedBy, timestamp, blockId], function(err) {
             if (err) {
-                console.error('❌ Error updating non-standard flag:', err);
-                res.status(500).json({ error: 'Database error updating non-standard flag' });
+                console.error('❌ Error updating not8Panel flag:', err);
+                res.status(500).json({ error: 'Database error updating not8Panel flag' });
             } else if (this.changes === 0) {
                 console.log('⚠️ No block found with ID:', blockId);
                 res.status(404).json({ error: 'Block not found' });
             } else {
-                console.log('✅ Non-standard flag updated for block:', blockId, 'Rows affected:', this.changes);
-                
+                console.log('✅ not8Panel flag updated for block:', blockId, 'Rows affected:', this.changes);
+
                 // Verify the update
-                db.get('SELECT blockID, not8Panel, updated_at FROM blocks WHERE blockID = ?', [blockId], (verifyErr, row) => {
+                db.get('SELECT blockID, not8Panel, not8PanelConfirmed, consensus_reached, updated_at FROM blocks WHERE blockID = ?', [blockId], (verifyErr, row) => {
                     if (verifyErr) {
                         console.error('❌ Error verifying update:', verifyErr);
                     } else {
                         console.log('✅ Verified update:', row);
                     }
                 });
-                
+
                 res.json({ 
                     success: true, 
                     blockID: blockId, 
-                    not8Panel: not8Panel,
+                    not8Panel: 1,
+                    not8PanelConfirmed: 1,
+                    consensus_reached: 1,
                     rowsAffected: this.changes 
                 });
             }

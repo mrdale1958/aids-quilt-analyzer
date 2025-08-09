@@ -828,8 +828,7 @@ main {
     letter-spacing: 0.5px;
 }
 
-/* Non-Standard Block Styles */
-.non-standard-overlay {
+.not8panel-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -844,7 +843,7 @@ main {
     box-sizing: border-box;
 }
 
-.non-standard-message {
+.not8panel-message {
     background: rgba(255, 193, 7, 0.9);
     color: #856404;
     padding: 1rem;
@@ -853,12 +852,12 @@ main {
     font-weight: bold;
 }
 
-.non-standard-message h3 {
+.not8panel-message h3 {
     margin: 0 0 0.5rem 0;
     font-size: 1.1rem;
 }
 
-.non-standard-message p {
+.not8panel-message p {
     margin: 0;
     font-size: 0.9rem;
 }
@@ -868,7 +867,7 @@ main {
     border-color: #ffc107;
 }
 
-/* Non-Standard Page Tabs */
+/* Not 8-Panel Page Tabs */
 .tab-navigation {
     display: flex;
     gap: 0;

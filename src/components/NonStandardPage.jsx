@@ -18,7 +18,7 @@ const NonStandardPage = ({ onBack }) => {
         
         try {
             // Load confirmed blocks
-            const confirmedResponse = await fetch('/api/blocks/nonstandard');
+            const confirmedResponse = await fetch('/api/blocks/not8panel');
             if (!confirmedResponse.ok) {
                 throw new Error(`HTTP ${confirmedResponse.status}: ${confirmedResponse.statusText}`);
             }
@@ -26,7 +26,7 @@ const NonStandardPage = ({ onBack }) => {
             setConfirmedBlocks(confirmedData);
 
             // Load pending blocks
-            const pendingResponse = await fetch('/api/blocks/nonstandard/pending');
+            const pendingResponse = await fetch('/api/blocks/not8panel/pending');
             if (!pendingResponse.ok) {
                 throw new Error(`HTTP ${pendingResponse.status}: ${pendingResponse.statusText}`);
             }
@@ -105,12 +105,12 @@ const NonStandardPage = ({ onBack }) => {
 
     const handleVerifyBlock = async (block, isNonStandard) => {
         const blockId = block.blockID;
-        console.log('🔍 Verifying non-standard block:', blockId, 'isNonStandard:', isNonStandard);
+        console.log('🔍 Verifying not8panel block:', blockId, 'isNot8Panel:', isNonStandard);
         
         setVerifying(prev => new Set(prev).add(blockId));
         
         try {
-            const response = await fetch(`/api/blocks/${blockId}/nonstandard`, {
+            const response = await fetch(`/api/blocks/${blockId}/not8panel`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',

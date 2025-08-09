@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import QuiltAnalyzer from './components/QuiltAnalyzer';
 import RecropPage from './components/RecropPage';
-import NonStandardPage from './components/NonStandardPage';
+import Not8PanelPage from './components/Not8PanelPage';
 import RecropListPage from './components/RecropListPage';
 import RecropAccessModal from './components/RecropAccessModal';
 import './App.css';
@@ -92,9 +92,9 @@ function App() {
                     return null;
                 }
             
-            case 'nonstandard':
+            case 'not8panel':
                 return (
-                    <NonStandardPage 
+                    <Not8PanelPage 
                         onBack={() => setCurrentPage('dashboard')}
                     />
                 );
@@ -111,7 +111,7 @@ function App() {
                 return (
                     <Dashboard 
                         onAnalyzeBlock={handleAnalyzeBlock}
-                        onViewNonStandard={() => setCurrentPage('nonstandard')}
+                        onViewNot8Panel={() => setCurrentPage('not8panel')}
                         onViewRecropQueue={handleRecropAccess}
                         onDashboardUpdate={handleDashboardUpdate}
                     />
@@ -148,10 +148,10 @@ function App() {
                             Analyzer
                         </button>
                         <button 
-                            className={`nav-btn ${currentPage === 'nonstandard' ? 'active' : ''}`}
-                            onClick={() => setCurrentPage('nonstandard')}
+                            className={`nav-btn ${currentPage === 'not8panel' ? 'active' : ''}`}
+                            onClick={() => setCurrentPage('not8panel')}
                         >
-                            Non-Standard Blocks
+                            Not 8-Panel Blocks
                         </button>
                         <button 
                             className={`nav-btn ${currentPage === 'recroplist' ? 'active' : ''}`}

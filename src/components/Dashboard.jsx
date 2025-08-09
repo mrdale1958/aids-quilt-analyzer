@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import StatsPanel from './StatsPanel';
 import styles from './Dashboard.module.css';
 
-const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDashboardUpdate }) => {
+const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashboardUpdate }) => {
     console.log('📊 Dashboard component rendering...');
     console.log('🎨 Styles object:', styles);
     
     const [stats, setStats] = useState({});
     const [votingStats, setVotingStats] = useState({});
-    const [nonStandardStats, setNonStandardStats] = useState({ confirmed: 0, pending: 0 });
+    const [not8PanelStats, setNot8PanelStats] = useState({ confirmed: 0, pending: 0 });
     const [recropStats, setRecropStats] = useState({ needsRecrop: 0 });
     const [nextBlock, setNextBlock] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +40,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                     fetchNextBlock(),
                     fetchStats(),
                     fetchVotingStats(),
-                    fetchNonStandardStats(),
+                    fetchNot8PanelStats(),
                     fetchRecropStats()
                 ]);
                 
@@ -130,31 +130,31 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
         }
     };
 
-    const fetchNonStandardStats = async () => {
+    const fetchNot8PanelStats = async () => {
         try {
-            console.log('🔄 Fetching non-standard stats...');
+            console.log('🔄 Fetching not8panel stats...');
             const [confirmedRes, pendingRes] = await Promise.all([
-                fetch('/api/blocks/nonstandard'),
-                fetch('/api/blocks/nonstandard/pending')
+                fetch('/api/blocks/not8panel'),
+                fetch('/api/blocks/not8panel/pending')
             ]);
 
             if (confirmedRes.ok && pendingRes.ok) {
                 const confirmedData = await confirmedRes.json();
                 const pendingData = await pendingRes.json();
                 
-                console.log('📊 Non-standard stats - confirmed:', confirmedData.length, 'pending:', pendingData.length);
+                console.log('📊 Not8Panel stats - confirmed:', confirmedData.length, 'pending:', pendingData.length);
                 
-                setNonStandardStats({
+                setNot8PanelStats({
                     confirmed: Array.isArray(confirmedData) ? confirmedData.length : 0,
                     pending: Array.isArray(pendingData) ? pendingData.length : 0
                 });
             } else {
-                console.error('❌ Failed to fetch non-standard stats');
-                setNonStandardStats({ confirmed: 0, pending: 0 });
+                console.error('❌ Failed to fetch not8panel stats');
+                setNot8PanelStats({ confirmed: 0, pending: 0 });
             }
         } catch (error) {
-            console.error('❌ Error fetching non-standard stats:', error);
-            setNonStandardStats({ confirmed: 0, pending: 0 });
+            console.error('❌ Error fetching not8panel stats:', error);
+            setNot8PanelStats({ confirmed: 0, pending: 0 });
         }
     };
 
@@ -198,7 +198,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                 fetchNextBlock(),
                 fetchStats(),
                 fetchVotingStats(),
-                fetchNonStandardStats(),
+                fetchNot8PanelStats(),
                 fetchRecropStats()
             ]);
         } catch (error) {
@@ -265,10 +265,9 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
 
             <div className={styles.actionSection}>
                 <div className={styles.nextBlockCard}>
-                    <h3>Next Block to Analyze</h3>
+                    <h3>Next Block to Analyze: {nextBlock.blockID}</h3>
                     {nextBlock ? (
                         <div>
-                            <p>Next block: <strong>Block #{nextBlock.blockID}</strong></p>
                             <div className={styles.blockVotingStatus}>
                                 <p>Current votes: <strong>{nextBlock.vote_count || 0}</strong></p>
                                 <p className={styles.votesNeeded}>
@@ -281,9 +280,9 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                                 className={`btn-primary ${styles.analyzeBtn}`}
                                 onClick={handleStartAnalyzing}
                             >
-                                {(!nextBlock.vote_count || nextBlock.vote_count === 0) ? 'Start First Analysis' : 
-                                 nextBlock.vote_count === 1 ? 'Provide Second Analysis' :
-                                 'Provide Additional Analysis'}
+                                {(!nextBlock.vote_count || nextBlock.vote_count === 0) ? 'Start First Analysis of Block #' + nextBlock.blockID : 
+                                 nextBlock.vote_count === 1 ? 'Provide Second Analysis of Block #' + nextBlock.blockID :
+                                 'Provide Additional Analysis of Block #' + nextBlock.blockID}
                             </button>
                         </div>
                     ) : (
@@ -303,7 +302,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                                 <span className={styles.voteLabel}>Total Analyses</span>
                             </div>
                             <div className={styles.voteStat}>
-                                <span className={styles.voteNumber}>{votingStats.totalUniqueBlocks || 0}</span>
+                                <span className={styles.voteNumber}>{votingStats.totalUniqueBlocksVoted || 0}</span>
                                 <span className={styles.voteLabel}>Unique Blocks Voted</span>
                             </div>
                             <div className={styles.voteStat}>
@@ -332,29 +331,14 @@ const Dashboard = ({ onAnalyzeBlock, onViewNonStandard, onViewRecropQueue, onDas
                 </div>
             </div>
 
-            <div className={styles.statCard}>
-                <h3>Non-Standard Blocks</h3>
-                <div className={styles.statNumber}>
-                    {(nonStandardStats.confirmed || 0) + (nonStandardStats.pending || 0)}
-                </div>
-                <div className={styles.statDetails}>
-                    <div>Confirmed: {nonStandardStats.confirmed || 0}</div>
-                    <div>Pending: {nonStandardStats.pending || 0}</div>
-                </div>
-                <button 
-                    className={`btn-secondary ${styles.viewAllBtn}`}
-                    onClick={onViewNonStandard}
-                >
-                    View All
-                </button>
-            </div>
+           
 
             <StatsPanel 
                 stats={stats}
                 votingStats={votingStats}
-                nonStandardStats={nonStandardStats}
+                not8PanelStats={not8PanelStats}
                 recropStats={recropStats}
-                onViewNonStandard={onViewNonStandard}
+                onViewNot8Panel={onViewNot8Panel}
                 onViewRecropQueue={onViewRecropQueue}
             />
                 

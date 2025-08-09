@@ -4,9 +4,9 @@ import styles from './StatsPanel.module.css';
 const StatsPanel = ({ 
     stats, 
     votingStats, 
-    nonStandardStats, 
+    not8PanelStats, 
     recropStats, 
-    onViewNonStandard, 
+    onViewNot8Panel, 
     onViewRecropQueue 
 }) => {
     return (
@@ -41,30 +41,26 @@ const StatsPanel = ({
                     <h4>Block Types</h4>
                     <div className={styles.statRow}>
                         <span className={styles.statLabel}>Standard 8-Panel:</span>
-                        <span className={styles.statValue}>{votingStats.standardBlocks || 6066}</span>
+                        <span className={styles.statValue}>{votingStats.standardBlocks || 0}</span>
                     </div>
                     <div className={styles.statRow}>
                         <span className={styles.statLabel}>Standard Completed:</span>
                         <span className={styles.statValue}>{votingStats.standardCompleted || 0}</span>
                     </div>
                     <div className={`${styles.statRow} ${styles.highlight}`}>
-                        <span className={styles.statLabel}>Non-Standard Confirmed:</span>
-                        <span className={styles.statValue}>{nonStandardStats.totalNonStandard || 0}</span>
+                        <span className={styles.statLabel}>Not 8-Panel Confirmed:</span>
+                        <span className={styles.statValue}>{not8PanelStats.confirmed || 0}</span>
                     </div>
                     <div className={styles.statRow}>
-                        <span className={styles.statLabel}>Non-Standard Pending:</span>
-                        <span className={styles.statValue}>{votingStats.pendingNonStandard || 0}</span>
+                        <span className={styles.statLabel}>Not 8-Panel Pending:</span>
+                        <span className={styles.statValue}>{not8PanelStats.pending || 0}</span>
                     </div>
-                    <div className={styles.statRow}>
-                        <span className={styles.statLabel}>Non-Standard Completed:</span>
-                        <span className={styles.statValue}>{votingStats.nonStandardCompleted || 0}</span>
-                    </div>
-                    {(nonStandardStats.totalNonStandard || 0) > 0 && (
+                    {(not8PanelStats.confirmed || 0) + (not8PanelStats.pending || 0) > 0 && (
                         <button 
                             className={styles.btnLink}
-                            onClick={onViewNonStandard}
+                            onClick={onViewNot8Panel}
                         >
-                            View Non-Standard Blocks →
+                            View Not 8-Panel Blocks →
                         </button>
                     )}
                 </div>
@@ -106,6 +102,7 @@ const StatsPanel = ({
                     )}
                 </div>
 
+               
                 {/* Overall Progress Card */}
                 <div className={styles.statCard}>
                     <h4>Overall Progress</h4>

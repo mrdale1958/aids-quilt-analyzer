@@ -210,7 +210,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
     const submitVote = async () => {
         // Add the validation logic from handleSubmit
         if (not8Panel) {
-            console.log('Non-standard block - submitting without point validation');
+            console.log('Not 8-Panel block - submitting without point validation');
         } else if (selectedPoints.length !== 8) {
             alert('Please select exactly 8 panel centers before submitting.');
             return;
@@ -341,12 +341,12 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
                         </div>
                     )}
                     
-                    {/* Show message for non-standard blocks */}
+                    {/* Show message for Not 8-Panel blocks */}
                     {not8Panel && (
-                        <div className="non-standard-overlay">
-                            <div className="non-standard-message">
-                                <h3>Non-Standard Block</h3>
-                                <p>Point selection disabled for non-standard layouts</p>
+                        <div className="not8panel-overlay">
+                            <div className="not8panel-message">
+                                <h3>Not 8-Panel Block</h3>
+                                <p>Point selection disabled for Not 8-Panel layouts</p>
                             </div>
                         </div>
                     )}
@@ -379,7 +379,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
                                     checked={not8Panel}
                                     onChange={(e) => {
                                         setNot8Panel(e.target.checked);
-                                        // Clear selected points when switching to non-standard
+                                        // Clear selected points when switching to Not 8-Panel
                                         if (e.target.checked) {
                                             setSelectedPoints([]);
                                         }
