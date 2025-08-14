@@ -1,7 +1,7 @@
 {
   "name": "aids-quilt-analyzer",
   "version": "1.0.0",
-  "description": "A modern web application for analyzing and annotating AIDS Memorial Quilt blocks through crowdsourced contributions. This project helps preserve the history of the AIDS Memorial Quilt by enabling volunteers to identify and mark the centers of individual panels within quilt blocks.",
+  "description": "A modern web application for analyzing and annotating AIDS Memorial Quilt blocks through crowdsourced contributions. This project helps preserve the history of the AIDS Memorial Quilt by enabling volunteers to identify and mark the centers of individual artifacts within quilt blocks.",
   "main": "index.js",
   "type": "module",
   "scripts": {

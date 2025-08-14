@@ -1,15 +1,15 @@
 # AIDS Quilt Crowdsourced Image Analyzer
 
-A modern web application for analyzing and annotating AIDS Memorial Quilt blocks through crowdsourced contributions. This project helps preserve the history of the AIDS Memorial Quilt by enabling volunteers to identify and mark the centers of individual panels within quilt blocks.
+A modern web application for analyzing and annotating AIDS Memorial Quilt blocks through crowdsourced contributions. This project helps preserve the history of the AIDS Memorial Quilt by enabling volunteers to identify and mark the centers of individual artifacts within quilt blocks.
 
 ## 🎯 Purpose
 
-The AIDS Memorial Quilt is one of the most significant works of community folk art in the world. This application helps digitally preserve and analyze quilt blocks by crowdsourcing the identification of individual panel boundaries, enabling better archival and research capabilities.
+The AIDS Memorial Quilt is one of the most significant works of community folk art in the world. This application helps digitally preserve and analyze quilt blocks by crowdsourcing the identification of individual artifact boundaries, enabling better archival and research capabilities.
 
 ## ✨ Features
 
-- **Interactive Image Analysis**: Click on numbered overlay points to mark panel centers
-- **Quality Control**: Options to flag blocks that need re-cropping or aren't standard 8-panel blocks
+- **Interactive Image Analysis**: Click on numbered overlay points to mark artifact centers
+- **Quality Control**: Options to flag blocks that need re-cropping or aren't standard 8-artifact blocks
 - **Session Tracking**: Keep track of blocks analyzed in each session
 - **Responsive Design**: Works on desktop and mobile devices
 - **Real-time Statistics**: Dashboard showing progress and completion rates
@@ -95,7 +95,7 @@ CREATE TABLE blocks (
     needsRecrop INTEGER DEFAULT 0,
     completed INTEGER DEFAULT 0,
     started INTEGER DEFAULT 0,
-    not8Panel INTEGER DEFAULT 0,
+    not8Artifact INTEGER DEFAULT 0,
     orientation_data TEXT,
     ip_address TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -103,12 +103,12 @@ CREATE TABLE blocks (
 );
 ```
 
-### Panels Table
+### Artifacts Table
 ```sql
-CREATE TABLE panels (
-    panelID INTEGER PRIMARY KEY,
+CREATE TABLE artifacts (
+    artifactID INTEGER PRIMARY KEY,
     blockID INTEGER,
-    panel_number INTEGER,
+    artifact_number INTEGER,
     x_coord INTEGER,
     y_coord INTEGER,
     width INTEGER,
@@ -122,9 +122,9 @@ CREATE TABLE panels (
 ### For Analysts
 1. **Dashboard**: View statistics and start analyzing blocks
 2. **Image Analysis**: 
-   - Click numbered points closest to each of the 8 panel centers
+   - Click numbered points closest to each of the 8 artifact centers
    - Mark blocks that need re-cropping
-   - Indicate blocks that aren't standard 8-panel layouts
+   - Indicate blocks that aren't standard 8-artifact layouts
 3. **Submit**: Save your analysis and move to the next block
 
 ### For Developers
