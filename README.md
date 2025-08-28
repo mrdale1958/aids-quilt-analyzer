@@ -77,14 +77,14 @@ aids-quilt-analyzer/
 ## 🔧 API Endpoints
 
 ### Blocks
-- `GET $(API_BASE)/block/:id` - Get specific block data
-- `GET $(API_BASE)/block/incomplete/next` - Get next incomplete block
-- `POST $(API_BASE)/orientation` - Submit block analysis data
+- `GET ${API_BASE}/block/:id` - Get specific block data
+- `GET ${API_BASE}/block/incomplete/next` - Get next incomplete block
+- `POST ${API_BASE}/orientation` - Submit block analysis data
 
 ### Statistics
-- `GET $(API_BASE)/stats/completed` - Get completed blocks count
-- `GET $(API_BASE)/stats/total` - Get total blocks count
-- `GET $(API_BASE)/health` - Health check endpoint
+- `GET ${API_BASE}/stats/completed` - Get completed blocks count
+- `GET ${API_BASE}/stats/total` - Get total blocks count
+- `GET ${API_BASE}/health` - Health check endpoint
 
 ## 💾 Database Schema
 
@@ -130,7 +130,7 @@ CREATE TABLE artifacts (
 ### For Developers
 1. **Adding Images**: Place quilt block images in `/public/images/`
 2. **Database Management**: Use SQLite browser or command line tools
-3. **API Testing**: Use the `$(API_BASE)/health` endpoint to verify server status
+3. **API Testing**: Use the `${API_BASE}/health` endpoint to verify server status
 
 ## 🛠️ Development
 
@@ -158,10 +158,10 @@ NODE_ENV=development
 
 ```bash
 # Test API endpoints
-curl http://localhost:3001$(API_BASE)/health
+curl http://localhost:3001${API_BASE}/health
 
 # Test block retrieval
-curl http://localhost:3001$(API_BASE)/block/1
+curl http://localhost:3001${API_BASE}/block/1
 ```
 
 ## 📦 Deployment

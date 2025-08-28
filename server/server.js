@@ -27,7 +27,7 @@ const __dirname = path.dirname(__filename);
 const port = process.env.PORT || process.argv[2] || 3002;
 app.listen(port, () => {
     console.log(`Server running on port ${port}`);
-    console.log(`Health check: http://localhost:${port}$(API_BASE)/health`);
+    console.log(`Health check: http://localhost:${port}${API_BASE}/health`);
 });
 
 // Initialize services
@@ -54,7 +54,7 @@ app.get('/aids-quilt-analyzer/*', (req, res) => {
 });
 
 // Health check
-app.get('$(API_BASE)/health', (req, res) => {
+app.get('${API_BASE}/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
@@ -72,11 +72,11 @@ app.use((req, res, next) => {
 console.log('🚀 Mounting routes...');
 const blockRoutes = createBlockRoutes(db, consensusService);
 console.log('🔧 Block routes created:', !!blockRoutes);
-app.use('$(API_BASE)/blocks', blockRoutes);
-console.log('✅ Blocks routes mounted at $(API_BASE)/blocks');
+app.use('${API_BASE}/blocks', blockRoutes);
+console.log('✅ Blocks routes mounted at ${API_BASE}/blocks');
 
-app.use('$(API_BASE)/stats', createStatsRoutes(db));
-console.log('✅ Stats routes mounted at $(API_BASE)/stats');
+app.use('${API_BASE}/stats', createStatsRoutes(db));
+console.log('✅ Stats routes mounted at ${API_BASE}/stats');
 
 app.use('/api', createOrientationRoutes(db, consensusService));
 console.log('✅ Orientation routes mounted at /api');
@@ -88,7 +88,7 @@ console.log('✅ Orientation routes mounted at /api');
 //console.log('✅ Recrop Tool API mounted at /api');
 
 // Image proxy route
-app.get('$(API_BASE)/image/:blockId', async (req, res) => {
+app.get('${API_BASE}/image/:blockId', async (req, res) => {
     const { blockId } = req.params;
     
     try {
@@ -187,7 +187,7 @@ ensureColumnsExist(db);
 // Start server
 //app.listen(PORT, () => {
 //    console.log(`Server running on port ${PORT}`);
-//    console.log(`Health check: http://localhost:${PORT}$(API_BASE)/health`);
+//    console.log(`Health check: http://localhost:${PORT}${API_BASE}/health`);
 //});
 
 // Graceful shutdown

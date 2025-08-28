@@ -67,7 +67,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     const fetchNextBlock = async () => {
         try {
             console.log('🔄 Fetching next block...');
-            const response = await fetch('$(API_BASE)/blocks/incomplete/next');
+            const response = await fetch('${API_BASE}/blocks/incomplete/next');
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 Next block data:', data);
@@ -90,7 +90,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     const fetchStats = async () => {
         try {
             console.log('🔄 Fetching general stats...');
-            const response = await fetch('$(API_BASE)/stats');
+            const response = await fetch('${API_BASE}/stats');
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 General stats:', data);
@@ -108,7 +108,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     const fetchVotingStats = async () => {
         try {
             console.log('🔄 Fetching voting stats...');
-            const response = await fetch('$(API_BASE)/stats/voting');
+            const response = await fetch('${API_BASE}/stats/voting');
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 Voting stats:', data);
@@ -137,8 +137,8 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
         try {
             console.log('🔄 Fetching not8panel stats...');
             const [confirmedRes, pendingRes] = await Promise.all([
-                fetch('$(API_BASE)/blocks/not8panel'),
-                fetch('$(API_BASE)/blocks/not8panel/pending')
+                fetch('${API_BASE}/blocks/not8panel'),
+                fetch('${API_BASE}/blocks/not8panel/pending')
             ]);
 
             if (confirmedRes.ok && pendingRes.ok) {
@@ -164,7 +164,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     const fetchRecropStats = async () => {
         try {
             console.log('🔄 Fetching recrop stats...');
-            const response = await fetch('$(API_BASE)/recrop/stats');
+            const response = await fetch('${API_BASE}/recrop/stats');
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 Recrop stats:', data);
@@ -185,7 +185,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     const fetchMultiVoteBlocks = async () => {
         try {
             console.log('🔄 Fetching multi-vote blocks...');
-            const response = await fetch('$(API_BASE)/stats/multivote-blocks');
+            const response = await fetch('${API_BASE}/stats/multivote-blocks');
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 Multi-vote blocks:', data);

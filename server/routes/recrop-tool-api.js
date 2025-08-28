@@ -21,7 +21,7 @@ export default function createRecropToolApi(db) {
                     if (imageResponse) {
                         // Zero-pad blockID to 5 digits
                         const paddedId = String(row.blockID).padStart(5, '0');
-                        res.json({ ...row, imageUrl: `$(API_BASE)/image/${paddedId}` });
+                        res.json({ ...row, imageUrl: `${API_BASE}/image/${paddedId}` });
                     } else {
                         res.status(404).json({ error: 'No image found for block', block: row });
                     }

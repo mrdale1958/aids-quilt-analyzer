@@ -18,7 +18,7 @@ const NonStandardPage = ({ onBack }) => {
         
         try {
             // Load confirmed blocks
-            const confirmedResponse = await fetch('$(API_BASE)/blocks/not8panel');
+            const confirmedResponse = await fetch('${API_BASE}/blocks/not8panel');
             if (!confirmedResponse.ok) {
                 throw new Error(`HTTP ${confirmedResponse.status}: ${confirmedResponse.statusText}`);
             }
@@ -26,7 +26,7 @@ const NonStandardPage = ({ onBack }) => {
             setConfirmedBlocks(confirmedData);
 
             // Load pending blocks
-            const pendingResponse = await fetch('$(API_BASE)/blocks/not8panel/pending');
+            const pendingResponse = await fetch('${API_BASE}/blocks/not8panel/pending');
             if (!pendingResponse.ok) {
                 throw new Error(`HTTP ${pendingResponse.status}: ${pendingResponse.statusText}`);
             }
@@ -46,7 +46,7 @@ const NonStandardPage = ({ onBack }) => {
     const loadConfirmedBlocks = async () => {
         try {
             console.log('📊 NonStandardPage: Loading confirmed blocks...');
-            const response = await fetch('$(API_BASE)/blocks/nonstandard');
+            const response = await fetch('${API_BASE}/blocks/nonstandard');
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 NonStandardPage confirmed blocks:', data);
@@ -65,7 +65,7 @@ const NonStandardPage = ({ onBack }) => {
     const loadPendingBlocks = async () => {
         try {
             console.log('📊 NonStandardPage: Loading pending blocks...');
-            const response = await fetch('$(API_BASE)/blocks/nonstandard/pending');
+            const response = await fetch('${API_BASE}/blocks/nonstandard/pending');
             if (response.ok) {
                 const data = await response.json();
                 console.log('📊 NonStandardPage pending blocks:', data);
@@ -110,7 +110,7 @@ const NonStandardPage = ({ onBack }) => {
         setVerifying(prev => new Set(prev).add(blockId));
         
         try {
-            const response = await fetch(`$(API_BASE)/blocks/${blockId}/not8panel`, {
+            const response = await fetch(`${API_BASE}/blocks/${blockId}/not8panel`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -176,7 +176,7 @@ const NonStandardPage = ({ onBack }) => {
             
             <div className="block-image">
                 <img 
-                    src={`$(API_BASE)/image/${block.blockID}`}
+                    src={`${API_BASE}/image/${block.blockID}`}
                     alt={`Block ${block.blockID}`}
                     onError={(e) => {
                         e.target.src = '/images/placeholder.png';
