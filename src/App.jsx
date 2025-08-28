@@ -36,7 +36,7 @@ function App() {
 
     const loadSpecificBlock = async (blockId) => {
         try {
-            const response = await fetch(`/api/blocks/${blockId}`);
+            const response = await fetch(`$(API_BASE)/blocks/${blockId}`);
             if (response.ok) {
                 const blockData = await response.json();
                 console.log('🎯 Loading block from URL:', blockData);
@@ -73,7 +73,7 @@ function App() {
 
     const handleRecropPasswordSubmit = async (password) => {
         try {
-            const response = await fetch('/api/recrop/access', {
+            const response = await fetch('$(API_BASE)/recrop/access', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   root: '.', // Ensure root is set correctly
+  base: '/aids-quilt-analyzer/',
   server: {
     port: 3000,
     proxy: {

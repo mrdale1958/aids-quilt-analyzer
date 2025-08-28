@@ -1,4 +1,5 @@
 import express from 'express';
+const app = express();
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -15,15 +16,19 @@ console.log('✅ createBlockRoutes imported:', typeof createBlockRoutes);
 
 import createStatsRoutes from './routes/stats.js';
 import createOrientationRoutes from './routes/orientation.js';
-import createRecropRoutes from './routes/recrop.js';
-import createRecropToolApi from './routes/recrop-tool-api.js';
+//import createRecropRoutes from './routes/recrop.js';
+//import createRecropToolApi from './routes/recrop-tool-api.js';
 
 // ES module compatibility
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-const PORT = process.env.PORT || 3001;
+//const app = express();
+const port = process.env.PORT || process.argv[2] || 3002;
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+    console.log(`Health check: http://localhost:${port}$(API_BASE)/health`);
+});
 
 // Initialize services
 const databaseService = new DatabaseService();
@@ -40,12 +45,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/tmp', express.static(path.join(__dirname, '..', 'tmp')));
 
+// Serve static files first
+app.use('/aids-quilt-analyzer', express.static(path.join(__dirname, '../dist')));
+
+// SPA fallback for client-side routes (must come AFTER static)
+app.get('/aids-quilt-analyzer/*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
 // Health check
-app.get('/api/health', (req, res) => {
+app.get('$(API_BASE)/health', (req, res) => {
     res.json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
-        port: PORT 
+        port: port 
     });
 });
 
@@ -59,23 +72,23 @@ app.use((req, res, next) => {
 console.log('🚀 Mounting routes...');
 const blockRoutes = createBlockRoutes(db, consensusService);
 console.log('🔧 Block routes created:', !!blockRoutes);
-app.use('/api/blocks', blockRoutes);
-console.log('✅ Blocks routes mounted at /api/blocks');
+app.use('$(API_BASE)/blocks', blockRoutes);
+console.log('✅ Blocks routes mounted at $(API_BASE)/blocks');
 
-app.use('/api/stats', createStatsRoutes(db));
-console.log('✅ Stats routes mounted at /api/stats');
+app.use('$(API_BASE)/stats', createStatsRoutes(db));
+console.log('✅ Stats routes mounted at $(API_BASE)/stats');
 
 app.use('/api', createOrientationRoutes(db, consensusService));
 console.log('✅ Orientation routes mounted at /api');
 
-app.use('/api', createRecropRoutes(db, imageService));
-console.log('✅ Recrop routes mounted at /api');
+//app.use('/api', createRecropRoutes(db, imageService));
+//console.log('✅ Recrop routes mounted at /api');
 
-app.use('/api', createRecropToolApi(db));
-console.log('✅ Recrop Tool API mounted at /api');
+//app.use('/api', createRecropToolApi(db));
+//console.log('✅ Recrop Tool API mounted at /api');
 
 // Image proxy route
-app.get('/api/image/:blockId', async (req, res) => {
+app.get('$(API_BASE)/image/:blockId', async (req, res) => {
     const { blockId } = req.params;
     
     try {
@@ -172,10 +185,10 @@ function ensureColumnsExist(db) {
 ensureColumnsExist(db);
 
 // Start server
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/api/health`);
-});
+//app.listen(PORT, () => {
+//    console.log(`Server running on port ${PORT}`);
+//    console.log(`Health check: http://localhost:${PORT}$(API_BASE)/health`);
+//});
 
 // Graceful shutdown
 process.on('SIGINT', () => {

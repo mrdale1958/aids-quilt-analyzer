@@ -22,7 +22,7 @@ const RecropPage = memo(({ onBack }) => {
         setPreviewMode(false);
         setPreviewUrl(null);
         try {
-            const response = await fetch('/api/block/recrop/next');
+            const response = await fetch('$(API_BASE)/block/recrop/next');
             if (response.ok) {
                 const blockData = await response.json();
                 if (blockData) {
@@ -78,7 +78,7 @@ const RecropPage = memo(({ onBack }) => {
     const getImageUrl = (blockId) => {
         if (!blockId) return null;
         const paddedId = padBlockId(blockId);
-        return `/api/image/${paddedId}`;
+        return `$(API_BASE)/image/${paddedId}`;
     };
 
     const handleImageLoaded = () => {
@@ -102,7 +102,7 @@ const RecropPage = memo(({ onBack }) => {
             setCurrentBlock(null);
         } else {
             const paddedId = currentBlock ? padBlockId(currentBlock.blockID) : '';
-            alert(`Image failed to load. URL: /api/image/${paddedId}. Check network tab for details.`);
+            alert(`Image failed to load. URL: $(API_BASE)/image/${paddedId}. Check network tab for details.`);
         }
     };
 
@@ -114,7 +114,7 @@ const RecropPage = memo(({ onBack }) => {
 
         setProcessing(true);
         try {
-            const response = await fetch('/api/recrop/preview', {
+            const response = await fetch('$(API_BASE)/recrop/preview', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ const RecropPage = memo(({ onBack }) => {
 
         setProcessing(true);
         try {
-            const response = await fetch('/api/recrop/accept', {
+            const response = await fetch('$(API_BASE)/recrop/accept', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -197,7 +197,7 @@ const RecropPage = memo(({ onBack }) => {
                 {lastTriedBlock && (
                     <div style={{marginTop: 12, color: '#888', fontSize: 14}}>
                         <div>Block ID: {lastTriedBlock.blockID}</div>
-                        <div>Image URL: /api/image/{paddedId}</div>
+                        <div>Image URL: $(API_BASE)/image/{paddedId}</div>
                         <div>Skip attempt: {skipCount}/{SKIP_LIMIT}</div>
                         <div style={{marginTop: 8}}>
                             <pre style={{fontSize: 12, color: '#666', background: '#f8f8f8', padding: 4, borderRadius: 4, maxWidth: 400, overflowX: 'auto'}}>

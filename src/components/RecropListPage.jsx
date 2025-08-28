@@ -16,7 +16,7 @@ const RecropListPage = ({ onBack }) => {
         
         try {
             console.log('Fetching recrop blocks...');
-            const response = await fetch('/api/blocks/recrop');
+            const response = await fetch('$(API_BASE)/blocks/recrop');
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -40,7 +40,7 @@ const RecropListPage = ({ onBack }) => {
         setVerifying(prev => new Set(prev).add(blockId));
         
         try {
-            const response = await fetch(`/api/blocks/${blockId}/recrop`, {
+            const response = await fetch(`$(API_BASE)/blocks/${blockId}/recrop`, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -142,7 +142,7 @@ const RecropListPage = ({ onBack }) => {
                         
                         <div className="block-image">
                             <img 
-                                src={`/api/image/${String(block.blockID).padStart(5, '0')}`}
+                                src={`$(API_BASE)/image/${String(block.blockID).padStart(5, '0')}`}
                                 alt={`Block ${block.blockID}`}
                                 onError={(e) => {
                                     e.target.src = '/images/placeholder.png';
