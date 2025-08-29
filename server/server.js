@@ -71,6 +71,32 @@ console.log('✅ Stats routes mounted at ${API_BASE}/stats');
 app.use(`${API_BASE}`, createOrientationRoutes(db, consensusService));
 console.log('✅ Orientation routes mounted at /api');
 
+app.use(`${API_BASE}`, createRecropRoutes(db, imageService));
+console.log('✅ Recrop routes mounted at /api');
+
+// Image proxy route (must be before static files)
+app.get(`${API_BASE}/image/:blockId`, async (req, res) => {
+    const { blockId } = req.params;
+    
+    try {
+        const imageResponse = await imageService.getBlockImage(blockId);
+        
+        if (imageResponse) {
+            res.set('Content-Type', 'image/png');
+            res.set('Cache-Control', 'public, max-age=86400');
+            imageResponse.body.pipe(res);
+        } else {
+            console.log(`No image found for block ${blockId}, sending placeholder`);
+            const placeholder = imageService.createPlaceholder(blockId);
+            res.set('Content-Type', 'image/svg+xml');
+            res.send(placeholder);
+        }
+    } catch (error) {
+        console.error('Error in image proxy:', error);
+        res.status(500).json({ error: 'Image service error' });
+    }
+});
+
 // Serve static files (after API routes)
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
 app.use('/tmp', express.static(path.join(__dirname, '..', 'tmp')));
@@ -93,34 +119,8 @@ app.get('/aids-quilt-analyzer/*', (req, res, next) => {
     res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.use(`${API_BASE}`, createRecropRoutes(db, imageService));
-console.log('✅ Recrop routes mounted at /api');
-
 //app.use(`${API_BASE}`, createRecropToolApi(db));
 //console.log('✅ Recrop Tool API mounted at /api');
-
-// Image proxy route
-app.get(`${API_BASE}/image/:blockId`, async (req, res) => {
-    const { blockId } = req.params;
-    
-    try {
-        const imageResponse = await imageService.getBlockImage(blockId);
-        
-        if (imageResponse) {
-            res.set('Content-Type', 'image/png');
-            res.set('Cache-Control', 'public, max-age=86400');
-            imageResponse.body.pipe(res);
-        } else {
-            console.log(`No image found for block ${blockId}, sending placeholder`);
-            const placeholder = imageService.createPlaceholder(blockId);
-            res.set('Content-Type', 'image/svg+xml');
-            res.send(placeholder);
-        }
-    } catch (error) {
-        console.error('Error in image proxy:', error);
-        res.status(500).json({ error: 'Image service error' });
-    }
-});
 
 // Remove the inline non-standard and recrop endpoints - they're now in route modules
 
