@@ -6,6 +6,7 @@ import Not8PanelPage from './components/Not8PanelPage';
 import RecropListPage from './components/RecropListPage';
 import RecropAccessModal from './components/RecropAccessModal';
 import './App.css';
+const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
 
 function App() {
     const [currentPage, setCurrentPage] = useState('dashboard'); // Make sure this defaults to 'dashboard'
@@ -73,7 +74,7 @@ function App() {
 
     const handleRecropPasswordSubmit = async (password) => {
         try {
-            const response = await fetch('${API_BASE}/recrop/access', {
+            const response = await fetch(`${API_BASE}/recrop/access`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

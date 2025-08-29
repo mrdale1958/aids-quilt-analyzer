@@ -91,7 +91,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
         setNot8Panel(false);
         
         try {
-            // FIX: Change from '${API_BASE}/block/' to '${API_BASE}/blocks/'
+            // FIX: Change from `${API_BASE}/block/' to `${API_BASE}/blocks/'
             const response = await fetch(`${API_BASE}/blocks/${id}`);
             if (response.ok) {
                 const blockData = await response.json();
@@ -126,8 +126,8 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
         setNot8Panel(false);
         
         try {
-            // FIX: Change from '${API_BASE}/block/incomplete/next' to '${API_BASE}/blocks/incomplete/next'
-            const response = await fetch('${API_BASE}/blocks/incomplete/next');
+            // FIX: Change from `${API_BASE}/block/incomplete/next' to `${API_BASE}/blocks/incomplete/next'
+            const response = await fetch(`${API_BASE}/blocks/incomplete/next`);
             if (response.ok) {
                 const blockData = await response.json();
                 if (blockData) {
@@ -261,7 +261,7 @@ const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
             
             console.log('🗳️ Full JSON being sent:', JSON.stringify(voteData, null, 2));
 
-            const response = await fetch('${API_BASE}/orientation/submit', {
+            const response = await fetch(`${API_BASE}/orientation/submit`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

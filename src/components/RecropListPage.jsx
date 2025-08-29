@@ -16,7 +16,7 @@ const RecropListPage = ({ onBack }) => {
         
         try {
             console.log('Fetching recrop blocks...');
-            const response = await fetch('${API_BASE}/blocks/recrop');
+            const response = await fetch(`${API_BASE}/blocks/recrop`);
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);

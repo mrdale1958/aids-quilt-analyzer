@@ -15,8 +15,8 @@ const Not8PanelPage = ({ onBack }) => {
         setError(null);
         try {
             const [confirmedRes, pendingRes] = await Promise.all([
-                fetch('${API_BASE}/blocks/not8panel'),
-                fetch('${API_BASE}/blocks/not8panel/pending')
+                fetch(`${API_BASE}/blocks/not8panel`),
+                fetch(`${API_BASE}/blocks/not8panel/pending`)
             ]);
             if (!confirmedRes.ok || !pendingRes.ok) throw new Error('Failed to fetch blocks');
             setConfirmed(await confirmedRes.json());
@@ -35,7 +35,7 @@ const Not8PanelPage = ({ onBack }) => {
     const handleConfirm = async (block) => {
         setVerifying(prev => new Set(prev).add(block.blockID));
         try {
-            const response = await fetch('${API_BASE}/orientation/submit', {
+            const response = await fetch(`${API_BASE}/orientation/submit`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

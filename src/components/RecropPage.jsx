@@ -22,7 +22,7 @@ const RecropPage = memo(({ onBack }) => {
         setPreviewMode(false);
         setPreviewUrl(null);
         try {
-            const response = await fetch('${API_BASE}/block/recrop/next');
+            const response = await fetch(`${API_BASE}/block/recrop/next`);
             if (response.ok) {
                 const blockData = await response.json();
                 if (blockData) {
@@ -114,7 +114,7 @@ const RecropPage = memo(({ onBack }) => {
 
         setProcessing(true);
         try {
-            const response = await fetch('${API_BASE}/recrop/preview', {
+            const response = await fetch(`${API_BASE}/recrop/preview`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -148,7 +148,7 @@ const RecropPage = memo(({ onBack }) => {
 
         setProcessing(true);
         try {
-            const response = await fetch('${API_BASE}/recrop/accept', {
+            const response = await fetch(`${API_BASE}/recrop/accept`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

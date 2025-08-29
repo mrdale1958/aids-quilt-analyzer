@@ -54,7 +54,7 @@ app.get('/aids-quilt-analyzer/*', (req, res) => {
 });
 
 // Health check
-app.get('${API_BASE}/health', (req, res) => {
+app.get(`${API_BASE}/health`, (req, res) => {
     res.json({ 
         status: 'OK', 
         timestamp: new Date().toISOString(),
@@ -72,23 +72,23 @@ app.use((req, res, next) => {
 console.log('🚀 Mounting routes...');
 const blockRoutes = createBlockRoutes(db, consensusService);
 console.log('🔧 Block routes created:', !!blockRoutes);
-app.use('${API_BASE}/blocks', blockRoutes);
+app.use(`${API_BASE}/blocks`, blockRoutes);
 console.log('✅ Blocks routes mounted at ${API_BASE}/blocks');
 
-app.use('${API_BASE}/stats', createStatsRoutes(db));
+app.use(`${API_BASE}/stats`, createStatsRoutes(db));
 console.log('✅ Stats routes mounted at ${API_BASE}/stats');
 
-app.use('/api', createOrientationRoutes(db, consensusService));
+app.use(`${API_BASE}`, createOrientationRoutes(db, consensusService));
 console.log('✅ Orientation routes mounted at /api');
 
-//app.use('/api', createRecropRoutes(db, imageService));
+//app.use(`${API_BASE}`, createRecropRoutes(db, imageService));
 //console.log('✅ Recrop routes mounted at /api');
 
-//app.use('/api', createRecropToolApi(db));
+//app.use(`${API_BASE}`, createRecropToolApi(db));
 //console.log('✅ Recrop Tool API mounted at /api');
 
 // Image proxy route
-app.get('${API_BASE}/image/:blockId', async (req, res) => {
+app.get(`${API_BASE}/image/:blockId`, async (req, res) => {
     const { blockId } = req.params;
     
     try {
