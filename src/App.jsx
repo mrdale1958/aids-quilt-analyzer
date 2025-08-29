@@ -7,7 +7,7 @@ import RecropListPage from './components/RecropListPage';
 import RecropAccessModal from './components/RecropAccessModal';
 import './App.css';
 const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
-
+console.log('API_BASE is', API_BASE, `${API_BASE}/stats`);
 function App() {
     const [currentPage, setCurrentPage] = useState('dashboard'); // Make sure this defaults to 'dashboard'
     const [selectedBlock, setSelectedBlock] = useState(null);

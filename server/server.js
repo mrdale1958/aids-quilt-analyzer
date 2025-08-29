@@ -19,7 +19,7 @@ import createOrientationRoutes from './routes/orientation.js';
 //import createRecropRoutes from './routes/recrop.js';
 //import createRecropToolApi from './routes/recrop-tool-api.js';
 
-const API_BASE = '/api';
+const API_BASE = '/aids-quilt-analyzer/api';
 
 // ES module compatibility
 const __filename = fileURLToPath(import.meta.url);

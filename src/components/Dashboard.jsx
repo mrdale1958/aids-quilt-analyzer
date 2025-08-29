@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import StatsPanel from './StatsPanel';
 import styles from './Dashboard.module.css';
-const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
+const HARD_API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
+console.log('API_BASE:', HARD_API_BASE);
+const API_BASE = '/aids-quilt-analyzer/api';
+console.log('HARD_API_BASE:', API_BASE);
+
 const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashboardUpdate }) => {
     console.log('📊 Dashboard component rendering...');
     console.log('🎨 Styles object:', styles);
@@ -65,8 +69,8 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     }, []);
 
     const fetchNextBlock = async () => {
-        try {
-            console.log('🔄 Fetching next block...');
+            console.log('🔄 Fetching next block...',`${API_BASE}/blocks/incomplete/next`);
+       try {
             const response = await fetch(`${API_BASE}/blocks/incomplete/next`);
             if (response.ok) {
                 const data = await response.json();
@@ -89,7 +93,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
 
     const fetchStats = async () => {
         try {
-            console.log('🔄 Fetching general stats...');
+            console.log('🔄 Fetching general stats...', `${API_BASE}/stats`);
             const response = await fetch(`${API_BASE}/stats`);
             if (response.ok) {
                 const data = await response.json();
@@ -106,8 +110,8 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
     };
 
     const fetchVotingStats = async () => {
-        try {
-            console.log('🔄 Fetching voting stats...');
+                   console.log('🔄 Fetching voting stats...', `${API_BASE}/stats/voting`);
+ try {
             const response = await fetch(`${API_BASE}/stats/voting`);
             if (response.ok) {
                 const data = await response.json();
@@ -135,7 +139,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
 
     const fetchNot8PanelStats = async () => {
         try {
-            console.log('🔄 Fetching not8panel stats...');
+            console.log('🔄 Fetching not8panel stats...', `${API_BASE}/blocks/not8panel`, `${API_BASE}/blocks/not8panel/pending`);
             const [confirmedRes, pendingRes] = await Promise.all([
                 fetch(`${API_BASE}/blocks/not8panel`),
                 fetch(`${API_BASE}/blocks/not8panel/pending`)
@@ -163,7 +167,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
 
     const fetchRecropStats = async () => {
         try {
-            console.log('🔄 Fetching recrop stats...');
+            console.log('🔄 Fetching recrop stats...', `${API_BASE}/recrop/stats`);
             const response = await fetch(`${API_BASE}/recrop/stats`);
             if (response.ok) {
                 const data = await response.json();
@@ -184,7 +188,7 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
 
     const fetchMultiVoteBlocks = async () => {
         try {
-            console.log('🔄 Fetching multi-vote blocks...');
+            console.log('🔄 Fetching multi-vote blocks...', `${API_BASE}/stats/multivote-blocks`    );
             const response = await fetch(`${API_BASE}/stats/multivote-blocks`);
             if (response.ok) {
                 const data = await response.json();
