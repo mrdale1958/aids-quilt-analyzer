@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
+const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
 const QuiltAnalyzer = ({ blockId, blockData, onBack }) => {
     console.log('🎯 QuiltAnalyzer received:', { blockId, blockData });
     

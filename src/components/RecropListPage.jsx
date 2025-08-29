@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
 const RecropListPage = ({ onBack }) => {
     const [blocks, setBlocks] = useState([]);
     const [loading, setLoading] = useState(true);

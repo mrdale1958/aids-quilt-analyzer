@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
+const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
 const NonStandardPage = ({ onBack }) => {
     const [confirmedBlocks, setConfirmedBlocks] = useState([]);
     const [pendingBlocks, setPendingBlocks] = useState([]);

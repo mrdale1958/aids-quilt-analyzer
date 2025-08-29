@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import styles from './Not8PanelPage.module.css';
-
+const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
 const Not8PanelPage = ({ onBack }) => {
     const [confirmed, setConfirmed] = useState([]);
     const [pending, setPending] = useState([]);

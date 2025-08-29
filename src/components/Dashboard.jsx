@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import StatsPanel from './StatsPanel';
 import styles from './Dashboard.module.css';
-
+const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
 const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashboardUpdate }) => {
     console.log('📊 Dashboard component rendering...');
     console.log('🎨 Styles object:', styles);

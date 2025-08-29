@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
 import CropCanvas from './CropCanvas';
 import CropControls from './CropControls';
-
+const API_BASE = `/${window.location.pathname.split('/')[1]}/api`;
 const RecropPage = memo(({ onBack }) => {
     const [currentBlock, setCurrentBlock] = useState(null);
     const [skipCount, setSkipCount] = useState(0);
