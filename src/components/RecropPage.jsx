@@ -197,8 +197,7 @@ const RecropPage = memo(({ onBack }) => {
                 {lastTriedBlock && (
                     <div style={{marginTop: 12, color: '#888', fontSize: 14}}>
                         <div>Block ID: {lastTriedBlock.blockID}</div>
-                        <div>Image URL: ${API_BASE}/image/{paddedId}</div>
-                        <div>Skip attempt: {skipCount}/{SKIP_LIMIT}</div>
+                        <div>Image URL: {`${API_BASE}/image/${paddedId}`}</div>                        <div>Skip attempt: {skipCount}/{SKIP_LIMIT}</div>
                         <div style={{marginTop: 8}}>
                             <pre style={{fontSize: 12, color: '#666', background: '#f8f8f8', padding: 4, borderRadius: 4, maxWidth: 400, overflowX: 'auto'}}>
                                 {JSON.stringify(lastTriedBlock.currentBlock, null, 2)}
