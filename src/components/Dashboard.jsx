@@ -95,14 +95,14 @@ const Dashboard = ({ onAnalyzeBlock, onViewNot8Panel, onViewRecropQueue, onDashb
         try {
             console.log('🔄 Fetching general stats...', `${API_BASE}/stats`);
             const response = await fetch(`${API_BASE}/stats`);
-            if (response.ok) {
-                const data = await response.json();
-                console.log('📊 General stats:', data);
-                setStats(data);
-            } else {
-                console.error('❌ Failed to fetch stats:', response.status);
-                setStats({});
-            }
+            const text = await response.text();
+  try {
+    const data = JSON.parse(text);
+    setStats(data);
+  } catch (jsonError) {
+    console.error('❌ Response was not valid JSON:', text);
+    setStats({});
+  }
         } catch (error) {
             console.error('❌ Error fetching stats:', error);
             setStats({});

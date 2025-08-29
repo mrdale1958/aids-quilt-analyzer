@@ -16,7 +16,7 @@ console.log('✅ createBlockRoutes imported:', typeof createBlockRoutes);
 
 import createStatsRoutes from './routes/stats.js';
 import createOrientationRoutes from './routes/orientation.js';
-//import createRecropRoutes from './routes/recrop.js';
+import createRecropRoutes from './routes/recrop.js';
 //import createRecropToolApi from './routes/recrop-tool-api.js';
 
 const API_BASE = '/aids-quilt-analyzer/api';
@@ -43,19 +43,13 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files
-app.use('/images', express.static(path.join(__dirname, '../public/images')));
-app.use('/tmp', express.static(path.join(__dirname, '..', 'tmp')));
-
-// Serve static files first
-app.use('/aids-quilt-analyzer', express.static(path.join(__dirname, '../dist')));
-
-// SPA fallback for client-side routes (must come AFTER static)
-app.get('/aids-quilt-analyzer/*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../dist/index.html'));
+// Logging middleware (before routes)
+app.use((req, res, next) => {
+    console.log(`📝 ${req.method} ${req.path}`);
+    next();
 });
 
-// Health check
+// Health check (first)
 app.get(`${API_BASE}/health`, (req, res) => {
     res.json({ 
         status: 'OK', 
@@ -64,13 +58,7 @@ app.get(`${API_BASE}/health`, (req, res) => {
     });
 });
 
-// MOVE THIS BEFORE THE ROUTES
-app.use((req, res, next) => {
-    console.log(`📝 ${req.method} ${req.path}`);
-    next();
-});
-
-// Mount routes
+// Mount API routes BEFORE static files
 console.log('🚀 Mounting routes...');
 const blockRoutes = createBlockRoutes(db, consensusService);
 console.log('🔧 Block routes created:', !!blockRoutes);
@@ -83,8 +71,30 @@ console.log('✅ Stats routes mounted at ${API_BASE}/stats');
 app.use(`${API_BASE}`, createOrientationRoutes(db, consensusService));
 console.log('✅ Orientation routes mounted at /api');
 
-//app.use(`${API_BASE}`, createRecropRoutes(db, imageService));
-//console.log('✅ Recrop routes mounted at /api');
+// Serve static files (after API routes)
+app.use('/images', express.static(path.join(__dirname, '../public/images')));
+app.use('/tmp', express.static(path.join(__dirname, '..', 'tmp')));
+
+// Serve static files (exclude api paths)
+app.use('/aids-quilt-analyzer', (req, res, next) => {
+    // Skip static file serving for API routes
+    if (req.url.startsWith('/api/')) {
+        return next();
+    }
+    express.static(path.join(__dirname, '../dist'))(req, res, next);
+});
+
+// SPA fallback for client-side routes (must come LAST, exclude API paths)
+app.get('/aids-quilt-analyzer/*', (req, res, next) => {
+    // Skip SPA fallback for API routes
+    if (req.url.startsWith('/api/')) {
+        return next();
+    }
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+
+app.use(`${API_BASE}`, createRecropRoutes(db, imageService));
+console.log('✅ Recrop routes mounted at /api');
 
 //app.use(`${API_BASE}`, createRecropToolApi(db));
 //console.log('✅ Recrop Tool API mounted at /api');

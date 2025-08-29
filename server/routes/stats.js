@@ -3,6 +3,39 @@ import express from 'express';
 const router = express.Router();
 
 export default function createStatsRoutes(db) {
+    // General stats (root endpoint)
+    router.get('/', (req, res) => {
+        console.log('📊 Getting general stats...');
+        
+        // Get basic stats
+        const queries = [
+            { key: 'total', sql: 'SELECT COUNT(*) as count FROM blocks' },
+            { key: 'completed', sql: 'SELECT COUNT(*) as count FROM blocks WHERE consensus_reached = 1' },
+            { key: 'pending', sql: 'SELECT COUNT(*) as count FROM blocks WHERE consensus_reached = 0 OR consensus_reached IS NULL' }
+        ];
+        
+        const results = {};
+        let completed = 0;
+        
+        queries.forEach(query => {
+            db.get(query.sql, (err, result) => {
+                completed++;
+                
+                if (err) {
+                    console.error(`Error getting ${query.key}:`, err);
+                    results[query.key] = 0;
+                } else {
+                    results[query.key] = result ? result.count : 0;
+                }
+                
+                if (completed === queries.length) {
+                    console.log('📊 General stats results:', results);
+                    res.json(results);
+                }
+            });
+        });
+    });
+
     // Total blocks
     router.get('/total', (req, res) => {
         db.get("SELECT COUNT(*) as count FROM blocks", (err, result) => {
