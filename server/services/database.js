@@ -28,8 +28,8 @@ class DatabaseService {
             PRAGMA journal_mode = WAL;
             PRAGMA synchronous = NORMAL;
             PRAGMA cache_size = 1000;
-            PRAGMA temp_store = MEMORY;
-            PRAGMA mmap_size = 67108864;
+            PRAGMA temp_store = FILE;
+            PRAGMA mmap_size = 0;
         `, (err) => {
             if (err) console.error('Error setting SQLite pragmas:', err);
         });
