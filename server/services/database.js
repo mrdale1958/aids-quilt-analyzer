@@ -20,7 +20,20 @@ class DatabaseService {
             fs.mkdirSync(dbDir, { recursive: true });
         }
 
+        // Configure SQLite for better memory management
         this.db = new sqlite3.Database(this.dbPath);
+
+        // Set SQLite pragmas for memory optimization
+        this.db.exec(`
+            PRAGMA journal_mode = WAL;
+            PRAGMA synchronous = NORMAL;
+            PRAGMA cache_size = 1000;
+            PRAGMA temp_store = MEMORY;
+            PRAGMA mmap_size = 67108864;
+        `, (err) => {
+            if (err) console.error('Error setting SQLite pragmas:', err);
+        });
+
         this.createTables();
     }
 
@@ -161,6 +174,22 @@ class DatabaseService {
     close(callback) {
         if (this.db) {
             this.db.close(callback);
+        }
+    }
+
+    // Add connection management
+    serialize(callback) {
+        if (this.db) {
+            this.db.serialize(callback);
+        }
+    }
+
+    // Force cleanup of prepared statements
+    finalize() {
+        if (this.db) {
+            this.db.exec('PRAGMA optimize;', (err) => {
+                if (err) console.error('DB optimization error:', err);
+            });
         }
     }
 }

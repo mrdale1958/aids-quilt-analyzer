@@ -48,11 +48,13 @@ app.get('/api/health', (req, res) => {
     });
 });
 
-// MOVE THIS BEFORE THE ROUTES
-app.use((req, res, next) => {
-    console.log(`📝 ${req.method} ${req.path}`);
-    next();
-});
+// Reduce logging in production to prevent memory buildup
+if (process.env.NODE_ENV !== 'production') {
+    app.use((req, res, next) => {
+        console.log(`📝 ${req.method} ${req.path}`);
+        next();
+    });
+}
 
 // Mount routes
 try {
@@ -78,16 +80,33 @@ console.log('✅ Recrop routes mounted at /api');
 // Image proxy route
 app.get('/api/image/:blockId', async (req, res) => {
     const { blockId } = req.params;
-    
+
     try {
         const imageResponse = await imageService.getBlockImage(blockId);
-        
+
         if (imageResponse) {
             res.set('Content-Type', 'image/png');
             res.set('Cache-Control', 'public, max-age=86400');
+
+            // Handle stream cleanup properly to prevent memory leaks
             imageResponse.body.pipe(res);
+
+            imageResponse.body.on('end', () => {
+                imageResponse.body.destroy();
+            });
+
+            imageResponse.body.on('error', (err) => {
+                console.error('Stream error:', err);
+                imageResponse.body.destroy();
+                if (!res.headersSent) {
+                    res.status(500).json({ error: 'Stream error' });
+                }
+            });
+
+            res.on('close', () => {
+                imageResponse.body.destroy();
+            });
         } else {
-            console.log(`No image found for block ${blockId}, sending placeholder`);
             const placeholder = imageService.createPlaceholder(blockId);
             res.set('Content-Type', 'image/svg+xml');
             res.send(placeholder);
@@ -178,18 +197,42 @@ app.listen(PORT, () => {
     console.log(`Health check: http://localhost:${PORT}/api/health`);
 });
 
-// Graceful shutdown
+// Graceful shutdown with cleanup
 process.on('SIGINT', () => {
-    console.log('Closing database connection...');
+    console.log('Shutting down gracefully...');
+
+    // Optimize database before closing
+    databaseService.finalize();
+
     databaseService.close((err) => {
         if (err) {
             console.error('Error closing database:', err);
         } else {
             console.log('Database connection closed.');
         }
+
+        // Force garbage collection if available
+        if (global.gc) {
+            global.gc();
+        }
+
         process.exit(0);
     });
 });
+
+// Handle memory pressure
+process.on('warning', (warning) => {
+    if (warning.name === 'MaxListenersExceededWarning') {
+        console.warn('Memory warning - too many event listeners:', warning.message);
+    }
+});
+
+// Periodic cleanup
+setInterval(() => {
+    if (global.gc) {
+        global.gc();
+    }
+}, 300000); // Every 5 minutes
 
 // Add this route to your server:
 app.post('/api/recrop/access', (req, res) => {
